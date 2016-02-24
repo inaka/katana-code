@@ -1,0 +1,13 @@
+{application, katana_code,
+ [
+  {description, "Functions useful for processing Erlang code."},
+  {vsn, "0.2.22"},
+  {applications, [kernel, stdlib]},
+  {modules, []},
+  {registered, []},
+  {maintainers, ["Inaka"]},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/inaka/katana-code"}]},
+  {build_tools, ["erlang.mk"]}
+ ]
+}.
