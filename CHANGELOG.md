@@ -1,8 +1,16 @@
 # Change Log
 
+## [0.0.2](https://github.com/inaka/katana-code/tree/0.0.2) (2016-03-30)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.0.1...0.0.2)
+
+**Fixed bugs:**
+
+- katana-code.app.src should be called katana\_code.app.src [\#6](https://github.com/inaka/katana-code/pull/6) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [0.0.1](https://github.com/inaka/katana-code/tree/0.0.1) (2016-03-01)
 **Merged pull requests:**
 
+- Igaray.version bump [\#5](https://github.com/inaka/katana-code/pull/5) ([igaray](https://github.com/igaray))
 - Initial commit [\#3](https://github.com/inaka/katana-code/pull/3) ([igaray](https://github.com/igaray))
 - Update LICENSE [\#1](https://github.com/inaka/katana-code/pull/1) ([elbrujohalcon](https://github.com/elbrujohalcon))
 
