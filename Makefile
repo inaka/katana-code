@@ -1,4 +1,4 @@
-PROJECT = katana-code
+PROJECT = katana_code
 
 DEPS = inaka_aleppo elvis_core
 TEST_DEPS = mixer
