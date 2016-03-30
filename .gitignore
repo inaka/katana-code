@@ -1,4 +1,4 @@
-katana-code.d
+katana_code.d
 .erlang.mk/
 .eunit
 deps
