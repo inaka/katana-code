@@ -105,7 +105,7 @@ parse_tree(IncludeDirs, Source) ->
                 end,
 
     {Comments, CodeTokens} = lists:partition(IsComment, NewTokens),
-    Forms = ktn_lists:split_when(fun is_dot/1, CodeTokens),
+    Forms = split_when(fun is_dot/1, CodeTokens),
     ParsedForms = lists:map(fun erl_parse:parse_form/1, Forms),
     Children = [to_map(Parsed) || {ok, Parsed} <- ParsedForms],
 
@@ -139,7 +139,7 @@ eval(Source, Bindings) ->
 consult(Source) ->
     SourceStr = to_str(Source),
     {ok, Tokens, _} = erl_scan:string(SourceStr),
-    Forms = ktn_lists:split_when(fun is_dot/1, Tokens),
+    Forms = split_when(fun is_dot/1, Tokens),
     ParseFun = fun (Form) ->
                        {ok, Expr} = erl_parse:parse_exprs(Form),
                        Expr
@@ -751,3 +751,32 @@ to_map(Parsed) when is_tuple(Parsed) ->
     throw({unhandled_abstract_form, Parsed});
 to_map(Parsed) ->
     throw({unexpected_abstract_form, Parsed}).
+
+%% @doc Splits a list whenever an element satisfies the When predicate.
+%%      Returns a list of lists where each list includes the matched element
+%%      as its last one.
+%%      E.g.
+%%      <code>
+%%        split_when(fun (X) -> $. == X end, "a.b.c") = ["a.", "b.", "c"]
+%%      </code>
+%%      NOTE: Copied from ktn_lists not to bring the whole erlang-katana
+%%            repo as a dependency here
+%% @end
+-spec split_when(fun(), list()) -> list().
+split_when(When, List) ->
+    split_when(When, List, [[]]).
+
+split_when(When, [], [[] | Results]) ->
+    split_when(When, [], Results);
+split_when(_When, [], Results) ->
+    Reversed = lists:map(fun lists:reverse/1, Results),
+    lists:reverse(Reversed);
+split_when(When, [Head | Tail], [Current0 | Rest]) ->
+    Current = [Head | Current0],
+    Result = case When(Head) of
+                 true ->
+                     [[], Current | Rest];
+                 false ->
+                     [Current | Rest]
+             end,
+    split_when(When, Tail, Result).
