@@ -1,11 +1,24 @@
 # Change Log
 
+## [0.0.3](https://github.com/inaka/katana-code/tree/0.0.3) (2016-04-07)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.0.2...0.0.3)
+
+**Fixed bugs:**
+
+- Add deps to the app.src file [\#10](https://github.com/inaka/katana-code/pull/10) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [0.0.2](https://github.com/inaka/katana-code/tree/0.0.2) (2016-03-30)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.0.1...0.0.2)
 
 **Fixed bugs:**
 
 - katana-code.app.src should be called katana\_code.app.src [\#6](https://github.com/inaka/katana-code/pull/6) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
+**Merged pull requests:**
+
+- \[\#quick\] Add katana\_code.d to .gitignore [\#9](https://github.com/inaka/katana-code/pull/9) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- \[\#quick\] Fix project name [\#8](https://github.com/inaka/katana-code/pull/8) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Version Bump to 0.0.2 [\#7](https://github.com/inaka/katana-code/pull/7) ([elbrujohalcon](https://github.com/elbrujohalcon))
 
 ## [0.0.1](https://github.com/inaka/katana-code/tree/0.0.1) (2016-03-01)
 **Merged pull requests:**
