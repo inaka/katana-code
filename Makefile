@@ -1,14 +1,13 @@
 PROJECT = katana_code
 
-DEPS = inaka_aleppo elvis_core
-TEST_DEPS = mixer
+DEPS = aleppo
+TEST_DEPS = mixer xref_runner
 SHELL_DEPS = sync
 BUILD_DEPS = inaka_mk hexer_mk
 LOCAL_DEPS = tools compiler syntax_tools common_test hipe
 
-dep_inaka_aleppo = hex 0.9.9
-dep_mixer        = git https://github.com/inaka/mixer.git 0.1.4
-dep_elvis_core   = git https://github.com/inaka/elvis_core.git efa6df5
+dep_aleppo       = git https://github.com/inaka/aleppo.git 0.9.10
+dep_mixer        = git https://github.com/inaka/mixer.git 0.1.5
 dep_sync         = git https://github.com/rustyio/sync.git 9c78e7b
 dep_inaka_mk     = git https://github.com/inaka/inaka.mk.git 1.0.0
 dep_hexer_mk     = git https://github.com/inaka/hexer.mk.git 1.1.0

@@ -2,7 +2,7 @@
  [
   {description, "Functions useful for processing Erlang code."},
   {vsn, "0.0.2"},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, aleppo]},
   {modules, []},
   {registered, []},
   {maintainers, ["Inaka"]},
