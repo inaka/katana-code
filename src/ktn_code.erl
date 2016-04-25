@@ -9,7 +9,8 @@
          parse_tree/1,
          parse_tree/2,
          eval/1,
-         consult/1
+         consult/1,
+         to_str/1
         ]).
 
 %% Getters
@@ -187,19 +188,36 @@ content(#{content := Content}) ->
 content(_Node) ->
     [].
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Internal
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 -spec to_str(binary() | list() | atom()) -> string().
 to_str(Arg) when is_binary(Arg) ->
-    unicode:characters_to_list(Arg);
+    Encoding = source_encoding(Arg),
+    unicode:characters_to_list(Arg, Encoding);
 to_str(Arg) when is_atom(Arg) ->
     atom_to_list(Arg);
 to_str(Arg) when is_integer(Arg) ->
     integer_to_list(Arg);
 to_str(Arg) when is_list(Arg) ->
     Arg.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Internal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-spec source_encoding(binary() | list()) -> latin1 | utf8.
+source_encoding(Source) ->
+    Re = ".*\n?.*(coding *[:=] *(?<encoding>[-a-zA-Z0-9]+))",
+    ReOpts = [firstline, {capture, all_names, list}],
+    case re:run(Source, Re, ReOpts) of
+        {match, [Encoding]} ->
+            case string:to_lower(Encoding) of
+                "latin-1" ->
+                    latin1;
+                _ ->
+                    utf8
+            end;
+        nomatch ->
+            utf8
+    end.
 
 -spec is_dot(tuple()) -> boolean().
 is_dot({dot, _}) -> true;
