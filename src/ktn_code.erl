@@ -202,6 +202,7 @@ to_str(Arg) when is_integer(Arg) ->
 to_str(Arg) when is_list(Arg) ->
     Arg.
 
+-spec source_encoding(binary() | list()) -> latin1 | utf8.
 source_encoding(Source) ->
     Re = ".*\n?.*(coding *[:=] *(?<encoding>[-a-zA-Z0-9]+))",
     ReOpts = [firstline, {capture, all_names, list}],
