@@ -9,7 +9,8 @@
          parse_tree/1,
          parse_tree/2,
          eval/1,
-         consult/1
+         consult/1,
+         to_str/1
         ]).
 
 %% Getters
@@ -187,10 +188,6 @@ content(#{content := Content}) ->
 content(_Node) ->
     [].
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Internal
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 -spec to_str(binary() | list() | atom()) -> string().
 to_str(Arg) when is_binary(Arg) ->
     Encoding = source_encoding(Arg),
@@ -201,6 +198,10 @@ to_str(Arg) when is_integer(Arg) ->
     integer_to_list(Arg);
 to_str(Arg) when is_list(Arg) ->
     Arg.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Internal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec source_encoding(binary() | list()) -> latin1 | utf8.
 source_encoding(Source) ->

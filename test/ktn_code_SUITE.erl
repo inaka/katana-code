@@ -10,7 +10,8 @@
          consult/1,
          beam_to_string/1,
          parse_tree/1,
-         latin1_parse_tree/1
+         latin1_parse_tree/1,
+         to_string/1
         ]).
 
 -define(EXCLUDED_FUNS,
@@ -84,3 +85,9 @@ latin1_parse_tree(_Config) ->
       content := _} = ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
                                             "%% �"
                                             "-module(x).">>).
+
+-spec to_string(config()) -> any().
+to_string(_Config) ->
+    "1" = ktn_code:to_str(1),
+    "hello" = ktn_code:to_str(<<"hello">>),
+    "atom" = ktn_code:to_str(atom).
