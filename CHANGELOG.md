@@ -1,11 +1,22 @@
 # Change Log
 
+## [0.0.4](https://github.com/inaka/katana-code/tree/0.0.4) (2016-04-26)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.0.3...0.0.4)
+
+**Merged pull requests:**
+
+- Add support for latin1 encoded source files [\#12](https://github.com/inaka/katana-code/pull/12) ([tjarvstrand](https://github.com/tjarvstrand))
+
 ## [0.0.3](https://github.com/inaka/katana-code/tree/0.0.3) (2016-04-07)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.0.2...0.0.3)
 
 **Fixed bugs:**
 
 - Add deps to the app.src file [\#10](https://github.com/inaka/katana-code/pull/10) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
+**Merged pull requests:**
+
+- Version Bump to 0.0.3 [\#11](https://github.com/inaka/katana-code/pull/11) ([elbrujohalcon](https://github.com/elbrujohalcon))
 
 ## [0.0.2](https://github.com/inaka/katana-code/tree/0.0.2) (2016-03-30)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.0.1...0.0.2)
