@@ -1,10 +1,23 @@
 # Change Log
 
+## [0.1.0](https://github.com/inaka/katana-code/tree/0.1.0) (2016-06-14)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.0.4...0.1.0)
+
+**Closed issues:**
+
+- Move from erlang.mk to rebar3 [\#16](https://github.com/inaka/katana-code/issues/16)
+- Version Bump 0.0.4 [\#13](https://github.com/inaka/katana-code/issues/13)
+
+**Merged pull requests:**
+
+- \[Close \#16\] rebar3 support [\#17](https://github.com/inaka/katana-code/pull/17) ([Euen](https://github.com/Euen))
+
 ## [0.0.4](https://github.com/inaka/katana-code/tree/0.0.4) (2016-04-26)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.0.3...0.0.4)
 
 **Merged pull requests:**
 
+- \[\#13\] Version Bump 0.0.4 [\#14](https://github.com/inaka/katana-code/pull/14) ([davecaos](https://github.com/davecaos))
 - Add support for latin1 encoded source files [\#12](https://github.com/inaka/katana-code/pull/12) ([tjarvstrand](https://github.com/tjarvstrand))
 
 ## [0.0.3](https://github.com/inaka/katana-code/tree/0.0.3) (2016-04-07)
