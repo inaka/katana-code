@@ -22,7 +22,7 @@
         ]).
 
 -type tree_node_type() ::
-        function | clause | match | tuple
+        root | function | clause | match | tuple
       | atom | integer | float | string | char
       | binary | binary_element | var
       | call | remote
@@ -86,13 +86,13 @@ beam_to_erl(BeamPath, ErlPath) ->
         Error
     end.
 
-%% @equiv parse_tree([], Source).
--spec parse_tree(string()) -> tree_node().
+%% @equiv parse_tree([], Source)
+-spec parse_tree(string() | binary()) -> tree_node().
 parse_tree(Source) ->
     parse_tree([], Source).
 
 %% @doc Parses code in a string or binary format and returns the parse tree.
--spec parse_tree([string()], string()) -> tree_node().
+-spec parse_tree([string()], string() | binary()) -> tree_node().
 parse_tree(IncludeDirs, Source) ->
     SourceStr = to_str(Source),
     ScanOpts = [text, return_comments],
@@ -188,7 +188,7 @@ content(#{content := Content}) ->
 content(_Node) ->
     [].
 
--spec to_str(binary() | list() | atom()) -> string().
+-spec to_str(binary() | list() | atom() | integer()) -> string().
 to_str(Arg) when is_binary(Arg) ->
     Encoding = source_encoding(Arg),
     unicode:characters_to_list(Arg, Encoding);
@@ -250,7 +250,7 @@ get_text(_Attrs) ->
     "".
 
 %% @doc Converts a parse tree form the abstract format to a map based repr.
-%% TODO: Attributes are not being handled correctly.
+%% @todo Attributes are not being handled correctly.
 -spec to_map(term()) -> tree_node() | [tree_node()].
 to_map(ListParsed) when is_list(ListParsed) ->
     lists:map(fun to_map/1, ListParsed);
