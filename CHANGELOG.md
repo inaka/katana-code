@@ -1,15 +1,36 @@
 # Change Log
 
+## [0.1.1](https://github.com/inaka/katana-code/tree/0.1.1) (2018-04-30)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.1.0...0.1.1)
+
+**Fixed bugs:**
+
+- ktn\_code:type/1 returns 'var' for ?MODULE\_STRING [\#15](https://github.com/inaka/katana-code/issues/15)
+
+**Closed issues:**
+
+- Replace ktn\_xref\_SUITE by ktn\_meta\_SUITE [\#4](https://github.com/inaka/katana-code/issues/4)
+- Fulfill the open-source checklist [\#2](https://github.com/inaka/katana-code/issues/2)
+
+**Merged pull requests:**
+
+- Update Dependencies [\#24](https://github.com/inaka/katana-code/pull/24) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Update aleppo to 1.0.1 [\#22](https://github.com/inaka/katana-code/pull/22) ([jfacorro](https://github.com/jfacorro))
+- Add API to provide file name for `parse\_tree` [\#21](https://github.com/inaka/katana-code/pull/21) ([seriyps](https://github.com/seriyps))
+- Remove dead hipchat link [\#20](https://github.com/inaka/katana-code/pull/20) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [0.1.0](https://github.com/inaka/katana-code/tree/0.1.0) (2016-06-14)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.0.4...0.1.0)
 
 **Closed issues:**
 
+- Version Bump to 0.1.0 [\#18](https://github.com/inaka/katana-code/issues/18)
 - Move from erlang.mk to rebar3 [\#16](https://github.com/inaka/katana-code/issues/16)
 - Version Bump 0.0.4 [\#13](https://github.com/inaka/katana-code/issues/13)
 
 **Merged pull requests:**
 
+- \[Close \#18\] version bump to 0.1.0 [\#19](https://github.com/inaka/katana-code/pull/19) ([Euen](https://github.com/Euen))
 - \[Close \#16\] rebar3 support [\#17](https://github.com/inaka/katana-code/pull/17) ([Euen](https://github.com/Euen))
 
 ## [0.0.4](https://github.com/inaka/katana-code/tree/0.0.4) (2016-04-26)
