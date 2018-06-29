@@ -1,7 +1,7 @@
 # Change Log
 
-## [0.1.1](https://github.com/inaka/katana-code/tree/0.1.1) (2018-04-30)
-[Full Changelog](https://github.com/inaka/katana-code/compare/0.1.0...0.1.1)
+## [0.1.2](https://github.com/inaka/katana-code/tree/0.1.2) (2018-06-29)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.1.0...0.1.2)
 
 **Fixed bugs:**
 
@@ -15,6 +15,7 @@
 **Merged pull requests:**
 
 - Update Dependencies [\#24](https://github.com/inaka/katana-code/pull/24) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Bump Version to 0.1.1 [\#23](https://github.com/inaka/katana-code/pull/23) ([elbrujohalcon](https://github.com/elbrujohalcon))
 - Update aleppo to 1.0.1 [\#22](https://github.com/inaka/katana-code/pull/22) ([jfacorro](https://github.com/jfacorro))
 - Add API to provide file name for `parse\_tree` [\#21](https://github.com/inaka/katana-code/pull/21) ([seriyps](https://github.com/seriyps))
 - Remove dead hipchat link [\#20](https://github.com/inaka/katana-code/pull/20) ([elbrujohalcon](https://github.com/elbrujohalcon))

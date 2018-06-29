@@ -1,6 +1,6 @@
 {"1.1.0",
-[{<<"aleppo">>,{pkg,<<"inaka_aleppo">>,<<"1.1.0">>},0}]}.
+[{<<"aleppo">>,{pkg,<<"inaka_aleppo">>,<<"1.1.1">>},0}]}.
 [
 {pkg_hash,[
- {<<"aleppo">>, <<"98980B95A3C036ED4D7855FC06B2D7EB35C28ECA0295714FBBF74D6945763BB1">>}]}
+ {<<"aleppo">>, <<"B0F7D05A118C5EBC3A735D68E92A7BD5837FE53455495EDE37CF0AA8BA4912E3">>}]}
 ].
