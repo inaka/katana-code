@@ -22,6 +22,8 @@
          content/1
         ]).
 
+-export_type([tree_node/0, tree_node_type/0]).
+
 -type tree_node_type() ::
         root | function | clause | match | tuple
       | atom | integer | float | string | char
@@ -52,8 +54,6 @@
       attrs => map(),
       node_attrs => map(),
       content => [tree_node()]}.
-
--exported_type(tree_node/1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Exported API
