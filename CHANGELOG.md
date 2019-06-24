@@ -1,5 +1,16 @@
 # Change Log
 
+## [0.1.3](https://github.com/inaka/katana-code/tree/0.1.3) (2019-06-24)
+[Full Changelog](https://github.com/inaka/katana-code/compare/0.1.2...0.1.3)
+
+**Closed issues:**
+
+- Unknown type `ktn\_code:tree\_node/0` [\#27](https://github.com/inaka/katana-code/issues/27)
+
+**Merged pull requests:**
+
+- fix error with exporting types [\#28](https://github.com/inaka/katana-code/pull/28) ([NobbZ](https://github.com/NobbZ))
+
 ## [0.1.2](https://github.com/inaka/katana-code/tree/0.1.2) (2018-06-29)
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.1.0...0.1.2)
 
@@ -14,6 +25,7 @@
 
 **Merged pull requests:**
 
+- Update deps and bump version to 0.1.2 [\#25](https://github.com/inaka/katana-code/pull/25) ([elbrujohalcon](https://github.com/elbrujohalcon))
 - Update Dependencies [\#24](https://github.com/inaka/katana-code/pull/24) ([elbrujohalcon](https://github.com/elbrujohalcon))
 - Bump Version to 0.1.1 [\#23](https://github.com/inaka/katana-code/pull/23) ([elbrujohalcon](https://github.com/elbrujohalcon))
 - Update aleppo to 1.0.1 [\#22](https://github.com/inaka/katana-code/pull/22) ([jfacorro](https://github.com/jfacorro))
