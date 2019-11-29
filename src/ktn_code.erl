@@ -314,7 +314,7 @@ to_map({clause, Attrs, Patterns, Guards, Body}) ->
       attrs => #{location => get_location(Attrs),
                  text => get_text(Attrs)},
       node_attrs => #{pattern => to_map(Patterns),
-                guards => to_map(Guards)},
+                      guards => to_map(Guards)},
       content => to_map(Body)};
 
 to_map({match, Attrs, Left, Right}) ->
@@ -807,12 +807,13 @@ to_map({macro, Attrs, Name, Args}) ->
                 none -> [];
                 _ -> Args
             end,
-    #{ type       => macro
-     , attrs      => #{ location => get_location(Attrs)
-                      , text     => get_text(Attrs)
-                      , name => to_map(Name)
-                      }
-     , node_attrs => #{args => to_map(Args1)}
+    NameStr = macro_name(Name),
+    #{ type    => macro
+     , attrs   => #{ location => get_location(Attrs)
+                   , text     => get_text(Attrs) ++ NameStr
+                   , name     => NameStr
+                   }
+     , content => to_map(Args1)
      };
 
 %% Unhandled forms
@@ -824,6 +825,15 @@ to_map(Parsed) when is_tuple(Parsed) ->
     end;
 to_map(Parsed) ->
     throw({unexpected_abstract_form, Parsed}).
+
+-spec macro_name(any()) -> string().
+macro_name(Name) ->
+  case erl_syntax:type(Name) of
+    atom ->
+      erl_syntax:atom_name(Name);
+    variable ->
+      erl_syntax:variable_literal(Name)
+  end.
 
 %% @doc Splits a list whenever an element satisfies the When predicate.
 %%      Returns a list of lists where each list includes the matched element
