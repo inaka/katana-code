@@ -151,7 +151,6 @@ revert(macro, Node0) ->
     Pos  = erl_syntax:get_pos(Node),
     {macro, Pos, Name, Args}.
 
-
 token_to_map({Type, Attrs}) ->
     #{type => Type,
       attrs => #{text => get_text(Attrs),
@@ -811,10 +810,9 @@ to_map({macro, Attrs, Name, Args}) ->
     #{ type       => macro
      , attrs      => #{ location => get_location(Attrs)
                       , text     => get_text(Attrs)
+                      , name => to_map(Name)
                       }
-     , node_attrs => #{ name => to_map(Name)
-                      , args => to_map(Args1)
-                      }
+     , node_attrs => #{args => to_map(Args1)}
      };
 
 %% Unhandled forms
