@@ -100,30 +100,54 @@ parse_tree(IncludeDirs, Source) ->
 -spec parse_tree([string()],
                  file:name_all() | undefined,
                  string() | binary()) -> tree_node().
-parse_tree(IncludeDirs, FileName, Source) ->
-    SourceStr = to_str(Source),
-    ScanOpts = [text, return_comments],
+parse_tree(_IncludeDirs, _FileName, Source) ->
+    SourceStr       = to_str(Source),
+    ScanOpts        = [text, return_comments],
     {ok, Tokens, _} = erl_scan:string(SourceStr, {1, 1}, ScanOpts),
-    Options0 = [{include, IncludeDirs}],
-    Options = case FileName of
-                  undefined -> Options0;
-                  _ -> [{file, FileName} | Options0]
-              end,
-    {ok, NewTokens} = aleppo:process_tokens(Tokens, Options),
+
+    IoString        = ktn_io_string:new(SourceStr),
+    {ok, Forms}     = erlang:apply(epp_dodger, parse, [IoString, {1, 1}, []]),
+    ok              = file:close(IoString),
 
     IsComment = fun
                     ({comment, _, _}) -> true;
                     (_) -> false
                 end,
 
-    {Comments, CodeTokens} = lists:partition(IsComment, NewTokens),
-    Forms = split_when(fun is_dot/1, CodeTokens),
-    ParsedForms = lists:map(fun erl_parse:parse_form/1, Forms),
-    Children = [to_map(Parsed) || {ok, Parsed} <- ParsedForms],
+    Comments = lists:filter(IsComment, Tokens),
+    Children = [to_map(revert(Form)) || Form <- Forms],
 
-    #{type => root,
-      attrs => #{tokens => lists:map(fun token_to_map/1, Tokens)},
-      content => to_map(Comments) ++ Children}.
+    #{ type    => root
+     , attrs   => #{tokens => lists:map(fun token_to_map/1, Tokens)}
+     , content => to_map(Comments) ++ Children
+     }.
+
+revert(Form) ->
+    Reverted = erl_syntax:revert(Form),
+    case erl_syntax:is_tree(Reverted) of
+        true  -> revert(erl_syntax:type(Form), Form);
+        false -> Reverted
+    end.
+
+revert(attribute, Node0) ->
+    Subs = erl_syntax:subtrees(Node0),
+    Gs   = [[erl_syntax:revert(X) || X <- L] || L <- Subs],
+    Node = erl_syntax:update_tree(Node0, Gs),
+
+    Name = erl_syntax:attribute_name(Node),
+    Args = erl_syntax:attribute_arguments(Node),
+    Pos  = erl_syntax:get_pos(Node),
+    {attribute, Pos, Name, Args};
+revert(macro, Node0) ->
+    Subs = erl_syntax:subtrees(Node0),
+    Gs   = [[erl_syntax:revert(X) || X <- L] || L <- Subs],
+    Node = erl_syntax:update_tree(Node0, Gs),
+
+    Name = erl_syntax:macro_name(Node),
+    Args = erl_syntax:macro_arguments(Node),
+    Pos  = erl_syntax:get_pos(Node),
+    {macro, Pos, Name, Args}.
+
 
 token_to_map({Type, Attrs}) ->
     #{type => Type,
@@ -774,10 +798,29 @@ to_map({comment, Attrs, _Text}) ->
       attrs => #{location => get_location(Attrs),
                  text => get_text(Attrs)}};
 
+%% Macro
+
+to_map({macro, Attrs, Name, Args}) ->
+    Args1 = case Args of
+                none -> [];
+                _ -> Args
+            end,
+    #{ type       => macro
+     , attrs      => #{ location => get_location(Attrs)
+                      , text     => get_text(Attrs)
+                      }
+     , node_attrs => #{ name => to_map(Name)
+                      , args => to_map(Args1)
+                      }
+     };
+
 %% Unhandled forms
 
 to_map(Parsed) when is_tuple(Parsed) ->
-    throw({unhandled_abstract_form, Parsed});
+    case erl_syntax:is_tree(Parsed) of
+        true -> to_map(revert(Parsed));
+        false -> throw({unhandled_abstract_form, Parsed})
+    end;
 to_map(Parsed) ->
     throw({unexpected_abstract_form, Parsed}).
 

@@ -60,7 +60,7 @@ consult(_Config) ->
 
 -spec beam_to_string(config()) -> ok.
 beam_to_string(_Config) ->
-    {error, beam_lib, _} = ktn_code:beam_to_string(bla),
+    {error, beam_lib, _} = ktn_code:beam_to_string(<<>>),
     BaseDir = code:lib_dir(katana_code),
     BeamDir = filename:join(BaseDir, "ebin/ktn_code.beam"),
     {ok, _} = ktn_code:beam_to_string(BeamDir),
@@ -68,27 +68,31 @@ beam_to_string(_Config) ->
 
 -spec parse_tree(config()) -> ktn_code:tree_node().
 parse_tree(_Config) ->
-    ModuleNode = #{type => module,
-                   attrs => #{location => {1, 2},
-                              text => "module",
-                              value => x}},
+    ModuleNode = #{ type  => module
+                  , attrs => #{ location => {1, 2}
+                              , text     => "module"
+                              , value    => x
+                              }
+                  },
 
-    #{type := root,
-      content := _} = ktn_code:parse_tree("-module(x)."),
+    #{ type    := root
+     , content := _
+     } = ktn_code:parse_tree("-module(x)."),
 
-    #{type := root,
-      content := [ModuleNode]} = ktn_code:parse_tree("-module(x).").
-
+    #{ type    := root
+     , content := [ModuleNode]
+     } = ktn_code:parse_tree("-module(x).").
 
 -spec latin1_parse_tree(config()) -> ktn_code:tree_node().
 latin1_parse_tree(_Config) ->
     error = try ktn_code:parse_tree(<<"%% �\n-module(x).">>)
             catch error:_ -> error
             end,
-    #{type := root,
-      content := _} = ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
-                                            "%% �"
-                                            "-module(x).">>).
+    #{ type    := root
+     , content := _
+     } = ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
+                               "%% �"
+                               "-module(x).">>).
 
 -spec to_string(config()) -> string().
 to_string(_Config) ->
