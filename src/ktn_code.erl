@@ -112,26 +112,34 @@ parse_tree(_IncludeDirs, _FileName, Source) ->
                                       ),
     ok              = file:close(IoString),
 
-    IsComment = fun
-                    ({comment, _, _}) -> true;
-                    (_) -> false
-                end,
-
-    Comments = lists:filter(IsComment, Tokens),
-    Children = [to_map(revert(Form)) || Form <- Forms],
+    Comments = lists:filter(fun is_comment/1, Tokens),
+    Children = [ to_map(Form)
+                 || Form <- Forms,
+                    %% filter forms that couldn't be parsed
+                    element(1, Form) =/= error
+               ],
 
     #{ type    => root
      , attrs   => #{tokens => lists:map(fun token_to_map/1, Tokens)}
      , content => to_map(Comments) ++ Children
      }.
 
+
+-spec is_comment(erl_scan:token()) -> boolean().
+is_comment({comment, _, _}) -> true;
+is_comment(_)               -> false.
+
+-spec revert(erl_syntax:syntaxTree()) -> erl_parse:foo().
 revert(Form) ->
-    Reverted = erl_syntax:revert(Form),
-    case erl_syntax:is_tree(Reverted) of
+    MaybeReverted = try erl_syntax:revert(Form)
+                    catch _:_ -> Form
+                    end,
+    case erl_syntax:is_tree(MaybeReverted) of
         true  -> revert(erl_syntax:type(Form), Form);
-        false -> Reverted
+        false -> MaybeReverted
     end.
 
+-spec revert(atom(), erl_syntax:syntaxTree()) -> erl_parse:foo().
 revert(attribute, Node0) ->
     Subs = erl_syntax:subtrees(Node0),
     Gs   = [[erl_syntax:revert(X) || X <- L] || L <- Subs],
@@ -149,7 +157,11 @@ revert(macro, Node0) ->
     Name = erl_syntax:macro_name(Node),
     Args = erl_syntax:macro_arguments(Node),
     Pos  = erl_syntax:get_pos(Node),
-    {macro, Pos, Name, Args}.
+    {macro, Pos, Name, Args};
+revert(_, Node) ->
+    %% When a node can't be reverted we avoid failing by returning
+    %% the a node for the atom 'non_reversible_form'
+    {atom, [{node, Node}], non_reversible_form}.
 
 token_to_map({Type, Attrs}) ->
     #{type => Type,
