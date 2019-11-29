@@ -106,7 +106,10 @@ parse_tree(_IncludeDirs, _FileName, Source) ->
     {ok, Tokens, _} = erl_scan:string(SourceStr, {1, 1}, ScanOpts),
 
     IoString        = ktn_io_string:new(SourceStr),
-    {ok, Forms}     = erlang:apply(epp_dodger, parse, [IoString, {1, 1}, []]),
+    {ok, Forms}     = ktn_dodger:parse( IoString
+                                      , {1, 1}
+                                      , [{scan_opts, [text]}]
+                                      ),
     ok              = file:close(IoString),
 
     IsComment = fun
