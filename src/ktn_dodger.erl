@@ -265,7 +265,7 @@ parse(Dev, L) ->
 %% @see parse_form/2
 %% @see quick_parse/3
 
--spec parse(file:io_device(), integer(), [option()]) ->
+-spec parse(file:io_device(), erl_anno:location(), [option()]) ->
         {'ok', erl_syntax:forms()}.
 
 parse(Dev, L0, Options) ->
