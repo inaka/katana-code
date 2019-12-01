@@ -7,8 +7,6 @@
          beam_to_string/1,
          beam_to_erl/2,
          parse_tree/1,
-         parse_tree/2,
-         parse_tree/3,
          eval/1,
          consult/1,
          to_str/1
@@ -87,20 +85,9 @@ beam_to_erl(BeamPath, ErlPath) ->
         Error
     end.
 
-%% @equiv parse_tree([], Source)
+%% @doc Parses code in a string or binary format and returns the parse tree.
 -spec parse_tree(string() | binary()) -> tree_node().
 parse_tree(Source) ->
-    parse_tree([], Source).
-
--spec parse_tree([string()], string() | binary()) -> tree_node().
-parse_tree(IncludeDirs, Source) ->
-    parse_tree(IncludeDirs, undefined, Source).
-
-%% @doc Parses code in a string or binary format and returns the parse tree.
--spec parse_tree([string()],
-                 file:name_all() | undefined,
-                 string() | binary()) -> tree_node().
-parse_tree(_IncludeDirs, _FileName, Source) ->
     SourceStr       = to_str(Source),
     ScanOpts        = [text, return_comments],
     {ok, Tokens, _} = erl_scan:string(SourceStr, {1, 1}, ScanOpts),
