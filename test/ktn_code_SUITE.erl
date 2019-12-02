@@ -10,6 +10,7 @@
          consult/1,
          beam_to_string/1,
          parse_tree/1,
+         parse_tree_otp/1,
          latin1_parse_tree/1,
          to_string/1
         ]).
@@ -60,38 +61,72 @@ consult(_Config) ->
 
 -spec beam_to_string(config()) -> ok.
 beam_to_string(_Config) ->
-    {error, beam_lib, _} = ktn_code:beam_to_string(bla),
+    {error, beam_lib, _} = ktn_code:beam_to_string(<<>>),
     BaseDir = code:lib_dir(katana_code),
     BeamDir = filename:join(BaseDir, "ebin/ktn_code.beam"),
     {ok, _} = ktn_code:beam_to_string(BeamDir),
     ok.
 
--spec parse_tree(config()) -> ktn_code:tree_node().
+-spec parse_tree(config()) -> ok.
 parse_tree(_Config) ->
-    ModuleNode = #{type => module,
-                   attrs => #{location => {1, 2},
-                              text => "module",
-                              value => x}},
+    ModuleNode = #{ type  => module
+                  , attrs => #{ location => {1, 2}
+                              , text     => "module"
+                              , value    => x
+                              }
+                  },
 
-    #{type := root,
-      content := _} = ktn_code:parse_tree("-module(x)."),
+    #{ type    := root
+     , content := _
+     } = ktn_code:parse_tree("-module(x)."),
 
-    #{type := root,
-      content := [ModuleNode]} = ktn_code:parse_tree("-module(x).").
+    #{ type    := root
+     , content := [ModuleNode]
+     } = ktn_code:parse_tree("-module(x)."),
 
+    ok.
 
--spec latin1_parse_tree(config()) -> ktn_code:tree_node().
+%% @doc Parse a 100 random OTP modules
+-spec parse_tree_otp(config()) -> ok.
+parse_tree_otp(_Config) ->
+    OTP   = code:root_dir(),
+    Paths = filelib:wildcard(OTP ++ "/**/*.erl"),
+    ShuffledPaths = shuffle(Paths),
+
+    _ = [ begin
+              {ok, Source} = file:read_file(Path),
+              ktn_code:parse_tree(Source)
+          end || Path <- lists:sublist(ShuffledPaths, 1, 100)
+        ],
+
+    ok.
+
+-spec latin1_parse_tree(config()) -> ok.
 latin1_parse_tree(_Config) ->
     error = try ktn_code:parse_tree(<<"%% �\n-module(x).">>)
             catch error:_ -> error
             end,
-    #{type := root,
-      content := _} = ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
-                                            "%% �"
-                                            "-module(x).">>).
+    #{ type    := root
+     , content := _
+     } = ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
+                               "%% �"
+                               "-module(x).">>),
 
--spec to_string(config()) -> string().
+    ok.
+
+-spec to_string(config()) -> ok.
 to_string(_Config) ->
     "1" = ktn_code:to_str(1),
     "hello" = ktn_code:to_str(<<"hello">>),
-    "atom" = ktn_code:to_str(atom).
+    "atom" = ktn_code:to_str(atom),
+
+    ok.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Helper
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-spec shuffle(any()) -> [any()].
+shuffle(List) ->
+  Items = [{rand:uniform(), X} || X <- List],
+  [X || {_, X} <- lists:sort(Items)].

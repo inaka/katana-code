@@ -7,8 +7,6 @@
          beam_to_string/1,
          beam_to_erl/2,
          parse_tree/1,
-         parse_tree/2,
-         parse_tree/3,
          eval/1,
          consult/1,
          to_str/1
@@ -87,43 +85,70 @@ beam_to_erl(BeamPath, ErlPath) ->
         Error
     end.
 
-%% @equiv parse_tree([], Source)
+%% @doc Parses code in a string or binary format and returns the parse tree.
 -spec parse_tree(string() | binary()) -> tree_node().
 parse_tree(Source) ->
-    parse_tree([], Source).
-
--spec parse_tree([string()], string() | binary()) -> tree_node().
-parse_tree(IncludeDirs, Source) ->
-    parse_tree(IncludeDirs, undefined, Source).
-
-%% @doc Parses code in a string or binary format and returns the parse tree.
--spec parse_tree([string()],
-                 file:name_all() | undefined,
-                 string() | binary()) -> tree_node().
-parse_tree(IncludeDirs, FileName, Source) ->
-    SourceStr = to_str(Source),
-    ScanOpts = [text, return_comments],
+    SourceStr       = to_str(Source),
+    ScanOpts        = [text, return_comments],
     {ok, Tokens, _} = erl_scan:string(SourceStr, {1, 1}, ScanOpts),
-    Options0 = [{include, IncludeDirs}],
-    Options = case FileName of
-                  undefined -> Options0;
-                  _ -> [{file, FileName} | Options0]
-              end,
-    {ok, NewTokens} = aleppo:process_tokens(Tokens, Options),
 
-    IsComment = fun
-                    ({comment, _, _}) -> true;
-                    (_) -> false
-                end,
+    IoString        = ktn_io_string:new(SourceStr),
+    {ok, Forms}     = ktn_dodger:parse( IoString
+                                      , {1, 1}
+                                      , [{scan_opts, [text]}]
+                                      ),
+    ok              = file:close(IoString),
 
-    {Comments, CodeTokens} = lists:partition(IsComment, NewTokens),
-    Forms = split_when(fun is_dot/1, CodeTokens),
-    ParsedForms = lists:map(fun erl_parse:parse_form/1, Forms),
-    Children = [to_map(Parsed) || {ok, Parsed} <- ParsedForms],
+    Comments = lists:filter(fun is_comment/1, Tokens),
+    Children = [ to_map(Form)
+                 || Form <- Forms,
+                    %% filter forms that couldn't be parsed
+                    element(1, Form) =/= error
+               ],
 
-    #{type => root,
-      attrs => #{tokens => lists:map(fun token_to_map/1, Tokens)},
-      content => to_map(Comments) ++ Children}.
+    #{ type    => root
+     , attrs   => #{tokens => lists:map(fun token_to_map/1, Tokens)}
+     , content => to_map(Comments) ++ Children
+     }.
+
+
+-spec is_comment(erl_scan:token()) -> boolean().
+is_comment({comment, _, _}) -> true;
+is_comment(_)               -> false.
+
+-spec revert(erl_syntax:syntaxTree()) -> erl_parse:foo().
+revert(Form) ->
+    MaybeReverted = try erl_syntax:revert(Form)
+                    catch _:_ -> Form
+                    end,
+    case erl_syntax:is_tree(MaybeReverted) of
+        true  -> revert(erl_syntax:type(Form), Form);
+        false -> MaybeReverted
+    end.
+
+-spec revert(atom(), erl_syntax:syntaxTree()) -> erl_parse:foo().
+revert(attribute, Node0) ->
+    Subs = erl_syntax:subtrees(Node0),
+    Gs   = [[erl_syntax:revert(X) || X <- L] || L <- Subs],
+    Node = erl_syntax:update_tree(Node0, Gs),
+
+    Name = erl_syntax:attribute_name(Node),
+    Args = erl_syntax:attribute_arguments(Node),
+    Pos  = erl_syntax:get_pos(Node),
+    {attribute, Pos, Name, Args};
+revert(macro, Node0) ->
+    Subs = erl_syntax:subtrees(Node0),
+    Gs   = [[erl_syntax:revert(X) || X <- L] || L <- Subs],
+    Node = erl_syntax:update_tree(Node0, Gs),
+
+    Name = erl_syntax:macro_name(Node),
+    Args = erl_syntax:macro_arguments(Node),
+    Pos  = erl_syntax:get_pos(Node),
+    {macro, Pos, Name, Args};
+revert(_, Node) ->
+    %% When a node can't be reverted we avoid failing by returning
+    %% the a node for the atom 'non_reversible_form'
+    {atom, [{node, Node}], non_reversible_form}.
 
 token_to_map({Type, Attrs}) ->
     #{type => Type,
@@ -288,7 +313,7 @@ to_map({clause, Attrs, Patterns, Guards, Body}) ->
       attrs => #{location => get_location(Attrs),
                  text => get_text(Attrs)},
       node_attrs => #{pattern => to_map(Patterns),
-                guards => to_map(Guards)},
+                      guards => to_map(Guards)},
       content => to_map(Body)};
 
 to_map({match, Attrs, Left, Right}) ->
@@ -774,12 +799,40 @@ to_map({comment, Attrs, _Text}) ->
       attrs => #{location => get_location(Attrs),
                  text => get_text(Attrs)}};
 
+%% Macro
+
+to_map({macro, Attrs, Name, Args}) ->
+    Args1 = case Args of
+                none -> [];
+                _ -> Args
+            end,
+    NameStr = macro_name(Name),
+    #{ type    => macro
+     , attrs   => #{ location => get_location(Attrs)
+                   , text     => get_text(Attrs) ++ NameStr
+                   , name     => NameStr
+                   }
+     , content => to_map(Args1)
+     };
+
 %% Unhandled forms
 
 to_map(Parsed) when is_tuple(Parsed) ->
-    throw({unhandled_abstract_form, Parsed});
+    case erl_syntax:is_tree(Parsed) of
+        true -> to_map(revert(Parsed));
+        false -> throw({unhandled_abstract_form, Parsed})
+    end;
 to_map(Parsed) ->
     throw({unexpected_abstract_form, Parsed}).
+
+-spec macro_name(any()) -> string().
+macro_name(Name) ->
+  case erl_syntax:type(Name) of
+    atom ->
+      erl_syntax:atom_name(Name);
+    variable ->
+      erl_syntax:variable_literal(Name)
+  end.
 
 %% @doc Splits a list whenever an element satisfies the When predicate.
 %%      Returns a list of lists where each list includes the matched element
