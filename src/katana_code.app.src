@@ -2,7 +2,7 @@
  [
   {description, "Functions useful for processing Erlang code."},
   {vsn, "0.2.0"},
-  {applications, [kernel, stdlib, aleppo]},
+  {applications, [kernel, stdlib]},
   {modules, []},
   {registered, []},
   {licenses, ["Apache 2.0"]},
