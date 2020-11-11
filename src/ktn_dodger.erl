@@ -865,6 +865,18 @@ fix_define(_Ts) ->
 
 -spec tokens_to_string([term()]) -> string().
 
+tokens_to_string([{atom,_,A}, {'(', _} | Ts]) ->
+    io_lib:write_atom(A) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{string, _, S}, {'(', _} | Ts]) ->
+    io_lib:write_string(S) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{char, _, C}, {'(', _} | Ts]) ->
+    io_lib:write_char(C) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{float, _, F}, {'(', _} | Ts]) ->
+    float_to_list(F) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{integer, _, N}, {'(', _} | Ts]) ->
+    integer_to_list(N) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{var, _, A}, {'(', _} | Ts]) ->
+    atom_to_list(A) ++ [$( | tokens_to_string(Ts)];
 tokens_to_string([{atom,_,A}, {')', _} | Ts]) ->
     io_lib:write_atom(A) ++ [$) | tokens_to_string(Ts)];
 tokens_to_string([{string, _, S}, {')', _} | Ts]) ->
@@ -897,6 +909,8 @@ tokens_to_string([{'?', _} | Ts]) ->
     [$?|tokens_to_string(Ts)];
 tokens_to_string([{A, _}, {'(', _} | Ts]) ->
     atom_to_list(A) ++ [$( | tokens_to_string(Ts)];
+tokens_to_string([{A, _}, {')', _} | Ts]) ->
+    atom_to_list(A) ++ [$) | tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
