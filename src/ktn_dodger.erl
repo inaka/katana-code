@@ -889,8 +889,9 @@ tokens_to_string([]) ->
     "".
 
 maybe_space([]) -> "";
-maybe_space([{_, _}|_]) -> "";
-maybe_space([_|_]) -> " ".
+maybe_space([{'?', _}|_]) -> " "; % Space before a macro
+maybe_space([{_, _}|_]) -> ""; % No space before (, ), {, etc...
+maybe_space([_|_]) -> " ". % Space before anything else
 
 %% @spec format_error(Descriptor::term()) -> string()
 %% @hidden
