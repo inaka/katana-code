@@ -865,57 +865,32 @@ fix_define(_Ts) ->
 
 -spec tokens_to_string([term()]) -> string().
 
-tokens_to_string([{atom,_,A}, {'(', _} | Ts]) ->
-    io_lib:write_atom(A) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{string, _, S}, {'(', _} | Ts]) ->
-    io_lib:write_string(S) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{char, _, C}, {'(', _} | Ts]) ->
-    io_lib:write_char(C) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{float, _, F}, {'(', _} | Ts]) ->
-    float_to_list(F) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{integer, _, N}, {'(', _} | Ts]) ->
-    integer_to_list(N) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{var, _, A}, {'(', _} | Ts]) ->
-    atom_to_list(A) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{atom,_,A}, {')', _} | Ts]) ->
-    io_lib:write_atom(A) ++ [$) | tokens_to_string(Ts)];
-tokens_to_string([{string, _, S}, {')', _} | Ts]) ->
-    io_lib:write_string(S) ++ [$) | tokens_to_string(Ts)];
-tokens_to_string([{char, _, C}, {')', _} | Ts]) ->
-    io_lib:write_char(C) ++ [$) | tokens_to_string(Ts)];
-tokens_to_string([{float, _, F}, {')', _} | Ts]) ->
-    float_to_list(F) ++ [$) | tokens_to_string(Ts)];
-tokens_to_string([{integer, _, N}, {')', _} | Ts]) ->
-    integer_to_list(N) ++ [$) | tokens_to_string(Ts)];
-tokens_to_string([{var, _, A}, {')', _} | Ts]) ->
-    atom_to_list(A) ++ [$) | tokens_to_string(Ts)];
 tokens_to_string([{atom,_,A} | Ts]) ->
-    io_lib:write_atom(A) ++ " " ++ tokens_to_string(Ts);
+    io_lib:write_atom(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{string, _, S} | Ts]) ->
-    io_lib:write_string(S) ++ " " ++ tokens_to_string(Ts);
+    io_lib:write_string(S) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{char, _, C} | Ts]) ->
-    io_lib:write_char(C) ++ " " ++ tokens_to_string(Ts);
+    io_lib:write_char(C) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{float, _, F} | Ts]) ->
-    float_to_list(F) ++ " " ++ tokens_to_string(Ts);
+    float_to_list(F) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{integer, _, N} | Ts]) ->
-    integer_to_list(N) ++ " " ++ tokens_to_string(Ts);
+    integer_to_list(N) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{var, _, A} | Ts]) ->
-    atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
+    atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
 tokens_to_string([{'(', _} | Ts]) ->
     [$(|tokens_to_string(Ts)];
 tokens_to_string([{'?', _} | Ts]) ->
     [$?|tokens_to_string(Ts)];
-tokens_to_string([{A, _}, {'(', _} | Ts]) ->
-    atom_to_list(A) ++ [$( | tokens_to_string(Ts)];
-tokens_to_string([{A, _}, {')', _} | Ts]) ->
-    atom_to_list(A) ++ [$) | tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
-    atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
+    atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
     "".
 
+maybe_space([]) -> "";
+maybe_space([{_, _}|_]) -> "";
+maybe_space([_|_]) -> " ".
 
 %% @spec format_error(Descriptor::term()) -> string()
 %% @hidden
