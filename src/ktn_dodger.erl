@@ -881,6 +881,8 @@ tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
 tokens_to_string([{'(', _} | Ts]) ->
     [$(|tokens_to_string(Ts)];
+tokens_to_string([{'{', _} | Ts]) ->
+    [${|tokens_to_string(Ts)];
 tokens_to_string([{'?', _} | Ts]) ->
     [$?|tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
