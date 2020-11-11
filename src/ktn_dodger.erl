@@ -895,6 +895,8 @@ tokens_to_string([{'(', _} | Ts]) ->
     [$(|tokens_to_string(Ts)];
 tokens_to_string([{'?', _} | Ts]) ->
     [$?|tokens_to_string(Ts)];
+tokens_to_string([{A, _}, {'(', _} | Ts]) ->
+    atom_to_list(A) ++ [$( | tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
