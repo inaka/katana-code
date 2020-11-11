@@ -879,14 +879,8 @@ tokens_to_string([{var, _, A} | Ts]) ->
     atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
-tokens_to_string([{'(', _} | Ts]) ->
-    [$(|tokens_to_string(Ts)];
-tokens_to_string([{'{', _} | Ts]) ->
-    [${|tokens_to_string(Ts)];
-tokens_to_string([{'?', _} | Ts]) ->
-    [$?|tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
-    atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
+    atom_to_list(A) ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
     "".
 
