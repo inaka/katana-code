@@ -71,10 +71,10 @@
 -module(ktn_dodger).
 
 -export([parse_file/1, quick_parse_file/1, parse_file/2,
-	 quick_parse_file/2, parse/1, quick_parse/1, parse/2,
-	 quick_parse/2, parse/3, quick_parse/3, parse_form/2,
-	 parse_form/3, quick_parse_form/2, quick_parse_form/3,
-	 format_error/1, tokens_to_string/1]).
+         quick_parse_file/2, parse/1, quick_parse/1, parse/2,
+         quick_parse/2, parse/3, quick_parse/3, parse_form/2,
+         parse_form/3, quick_parse_form/2, quick_parse_form/3,
+         format_error/1, tokens_to_string/1]).
 
 
 %% The following should be: 1) pseudo-uniquely identifiable, and 2)
@@ -212,17 +212,17 @@ do_parse_file(DefEncoding, File, Parser, Options) ->
             _ = epp:set_encoding(Dev, DefEncoding),
             try Parser(Dev, 1, Options)
             after ok = file:close(Dev)
-	    end;
+            end;
         {error, Error} ->
             {error, {0, file, Error}}  % defer to file:format_error/1
     end.
 
 find_invalid_unicode([H|T]) ->
     case H of
-	{error, {_Line, file_io_server, invalid_unicode}} ->
-	    invalid_unicode;
-	_Other ->
-	    find_invalid_unicode(T)
+        {error, {_Line, file_io_server, invalid_unicode}} ->
+            invalid_unicode;
+        _Other ->
+            find_invalid_unicode(T)
     end;
 find_invalid_unicode([]) -> none.
 
@@ -439,15 +439,15 @@ parse_form(Dev, L0, Parser, Options) ->
                 {'EXIT', Term} ->
                     {error, io_error(L1, {unknown, Term}), L1};
                 {error, Term} ->
-		    IoErr = io_error(L1, Term),
-		    {error, IoErr, L1};
+                    IoErr = io_error(L1, Term),
+                    {error, IoErr, L1};
                 {parse_error, _IoErr} when NoFail ->
-		    {ok, erl_syntax:set_pos(
-			   erl_syntax:text(tokens_to_string(Ts)),
-			   start_pos(Ts, L1)),
-		     L1};
+                    {ok, erl_syntax:set_pos(
+                           erl_syntax:text(tokens_to_string(Ts)),
+                           start_pos(Ts, L1)),
+                     L1};
                 {parse_error, IoErr} ->
-		    {error, IoErr, L1};
+                    {error, IoErr, L1};
                 {ok, F} ->
                     {ok, F, L1}
             end;
@@ -474,14 +474,14 @@ parse_tokens(Ts, Fix) ->
         {ok, Form} ->
             Form;
         {error, IoErr} ->
-	    case Fix(Ts) of
-		{form, Form} ->
-		    Form;
-		{retry, Ts1, Fix1} ->
-		    parse_tokens(Ts1, Fix1);
-		error ->
-		    throw({parse_error, IoErr})
-	    end
+            case Fix(Ts) of
+                {form, Form} ->
+                    Form;
+                {retry, Ts1, Fix1} ->
+                    parse_tokens(Ts1, Fix1);
+                error ->
+                    throw({parse_error, IoErr})
+            end
     end.
 
 %% ---------------------------------------------------------------------
@@ -538,15 +538,15 @@ quickscan_macros([{'?',_}, {Type, _, A} | Ts], [{string, L, S} | As])
     S1 = S ++ quick_macro_string(A),
     quickscan_macros(Ts1, [{string, L, S1} | As]);
 quickscan_macros([{'?',_}, {Type, _, _}=N | [{'(',_}|_]=Ts],
-		 [{':',_}|_]=As)
+                 [{':',_}|_]=As)
   when Type =:= atom; Type =:= var ->
     %% macro and open parenthesis after colon - check the token
     %% following the arguments (see scan_macros for details)
     Ts1 = case skip_macro_args(Ts) of
-	      {_, [{'->',_} | _] = Ts2} -> Ts2;
-	      {_, [{'when',_} | _] = Ts2} -> Ts2;
-	      _ -> Ts    %% assume macro without arguments
-	  end,
+              {_, [{'->',_} | _] = Ts2} -> Ts2;
+              {_, [{'when',_} | _] = Ts2} -> Ts2;
+              _ -> Ts    %% assume macro without arguments
+          end,
     quickscan_macros_1(N, Ts1, As);
 quickscan_macros([{'?',_}, {Type, _, _}=N | Ts], As)
   when Type =:= atom; Type =:= var ->
@@ -601,9 +601,9 @@ skip_macro_args([{'try',_}=T | Ts], Es, As) ->
     skip_macro_args(Ts, ['end' | Es], [T | As]);
 skip_macro_args([{'cond',_}=T | Ts], Es, As) ->
     skip_macro_args(Ts, ['end' | Es], [T | As]);
-skip_macro_args([{E,_}=T | Ts], [E], As) ->		%final close
+skip_macro_args([{E,_}=T | Ts], [E], As) ->                %final close
     {lists:reverse([T | As]), Ts};
-skip_macro_args([{E,_}=T | Ts], [E | Es], As) ->	%matching close
+skip_macro_args([{E,_}=T | Ts], [E | Es], As) ->        %matching close
     skip_macro_args(Ts, Es, [T | As]);
 skip_macro_args([T | Ts], Es, As) ->
     skip_macro_args(Ts, Es, [T | As]);
@@ -611,7 +611,7 @@ skip_macro_args([], _Es, _As) ->
     throw({error, macro_args}).
 
 filter_form({function, _, ?pp_form, _,
-	     [{clause, _, [], [], [{atom, _, kill}]}]}) ->
+             [{clause, _, [], [], [{atom, _, kill}]}]}) ->
     none;
 filter_form(T) ->
     T.
@@ -622,10 +622,10 @@ filter_form(T) ->
 
 normal_parser(Ts0, Opt) ->
     case scan_form(Ts0, Opt) of
-	Ts when is_list(Ts) ->
-	    rewrite_form(parse_tokens(Ts));
-	Node ->
-	    Node
+        Ts when is_list(Ts) ->
+            rewrite_form(parse_tokens(Ts));
+        Node ->
+            Node
     end.
 
 scan_form([{'-', _L}, {atom, La, define} | Ts], Opt) ->
@@ -690,12 +690,12 @@ scan_macros(Ts, Opt) ->
     scan_macros(Ts, [], Opt).
 
 scan_macros([{'?', _}=M, {Type, _, _}=N | Ts], [{string, L, _}=S | As],
- 	    #opt{clever = true}=Opt)
+             #opt{clever = true}=Opt)
   when Type =:= atom; Type =:= var ->
     %% macro after a string literal: be clever and insert ++
     scan_macros([M, N | Ts], [{'++', L}, S | As], Opt);
 scan_macros([{'?', L}, {Type, _, _}=N | [{'(',_}|_]=Ts],
-	    [{':',_}|_]=As, Opt)
+            [{':',_}|_]=As, Opt)
   when Type =:= atom; Type =:= var ->
     %% macro and open parentheses after colon - probably a call
     %% `m:?F(...)' so the argument list might belong to the call, not
@@ -704,12 +704,12 @@ scan_macros([{'?', L}, {Type, _, _}=N | [{'(',_}|_]=Ts],
     %% arguments to decide
     {Args, Rest} = skip_macro_args(Ts),
     case Rest of
-	[{'->',_} | _] ->
-	    macro_call(Args, L, N, Rest, As, Opt);
-	[{'when',_} | _] ->
-	    macro_call(Args, L, N, Rest, As, Opt);
-	_ ->
-	    macro(L, N, Ts, As, Opt)
+        [{'->',_} | _] ->
+            macro_call(Args, L, N, Rest, As, Opt);
+        [{'when',_} | _] ->
+            macro_call(Args, L, N, Rest, As, Opt);
+        _ ->
+            macro(L, N, Ts, As, Opt)
     end;
 scan_macros([{'?', L}, {Type, _, _}=N | [{'(',_}|_]=Ts], As, Opt)
   when Type =:= atom; Type =:= var ->
@@ -734,17 +734,17 @@ macro(L, {Type, _, A}, Rest, As, Opt) ->
 macro_call([{'(',_}, {')',_}], L, {_, Ln, _}=N, Rest, As, Opt) ->
     {Open, Close} = parentheses(As),
     scan_macros_1([], Rest,
-		  lists:reverse(Open ++ [{atom,L,?macro_call},
-					 {'(',L}, N, {')',Ln}] ++ Close,
-				As), Opt);
+                  lists:reverse(Open ++ [{atom,L,?macro_call},
+                                         {'(',L}, N, {')',Ln}] ++ Close,
+                                As), Opt);
 macro_call([{'(',_} | Args], L, {_, Ln, _}=N, Rest, As, Opt) ->
     {Open, Close} = parentheses(As),
     %% note that we must scan the argument list; it may not be skipped
     scan_macros_1(Args ++ Close,
-		  Rest,
-		  lists:reverse(Open ++ [{atom,L,?macro_call},
-					 {'(',L}, N, {',',Ln}],
-				As), Opt).
+                  Rest,
+                  lists:reverse(Open ++ [{atom,L,?macro_call},
+                                         {'(',L}, N, {',',Ln}],
+                                As), Opt).
 
 macro_atom(atom, A) ->
     list_to_atom(?atom_prefix ++ atom_to_list(A));
@@ -761,7 +761,7 @@ parentheses(_) ->
 
 %% (after a macro has been found and the arglist skipped, if any)
 scan_macros_1(Args, [{string, L, _} | _]=Rest, As,
-	      #opt{clever = true}=Opt) ->
+              #opt{clever = true}=Opt) ->
     %% string literal following macro: be clever and insert ++
     scan_macros(Args ++ [{'++', L} | Rest],  As, Opt);
 scan_macros_1(Args, Rest, As, Opt) ->
@@ -788,68 +788,68 @@ rewrite_list([]) ->
 
 rewrite(Node) ->
     case erl_syntax:type(Node) of
-	atom ->
-	    case atom_to_list(erl_syntax:atom_value(Node)) of
-		?atom_prefix ++ As ->
-		    A1 = list_to_atom(As),
-		    N = erl_syntax:copy_pos(Node, erl_syntax:atom(A1)),
-		    erl_syntax:copy_pos(Node, erl_syntax:macro(N));
-		?var_prefix ++ As ->
-		    A1 = list_to_atom(As),
-		    N = erl_syntax:copy_pos(Node, erl_syntax:variable(A1)),
-		    erl_syntax:copy_pos(Node, erl_syntax:macro(N));
-		_ ->
-		    Node
-	    end;
-	application ->
-	    F = erl_syntax:application_operator(Node),
-	    case erl_syntax:type(F) of
-		atom ->
-		    case erl_syntax:atom_value(F) of
-			?macro_call ->
-			    [A | As] = erl_syntax:application_arguments(Node),
-			    M = erl_syntax:macro(A, rewrite_list(As)),
-			    erl_syntax:copy_pos(Node, M);
-			_ ->
-			    rewrite_1(Node)
-		    end;
-		_ ->
-		    rewrite_1(Node)
-	    end;
-	_ ->
-	    rewrite_1(Node)
+        atom ->
+            case atom_to_list(erl_syntax:atom_value(Node)) of
+                ?atom_prefix ++ As ->
+                    A1 = list_to_atom(As),
+                    N = erl_syntax:copy_pos(Node, erl_syntax:atom(A1)),
+                    erl_syntax:copy_pos(Node, erl_syntax:macro(N));
+                ?var_prefix ++ As ->
+                    A1 = list_to_atom(As),
+                    N = erl_syntax:copy_pos(Node, erl_syntax:variable(A1)),
+                    erl_syntax:copy_pos(Node, erl_syntax:macro(N));
+                _ ->
+                    Node
+            end;
+        application ->
+            F = erl_syntax:application_operator(Node),
+            case erl_syntax:type(F) of
+                atom ->
+                    case erl_syntax:atom_value(F) of
+                        ?macro_call ->
+                            [A | As] = erl_syntax:application_arguments(Node),
+                            M = erl_syntax:macro(A, rewrite_list(As)),
+                            erl_syntax:copy_pos(Node, M);
+                        _ ->
+                            rewrite_1(Node)
+                    end;
+                _ ->
+                    rewrite_1(Node)
+            end;
+        _ ->
+            rewrite_1(Node)
     end.
 
 rewrite_1(Node) ->
     case erl_syntax:subtrees(Node) of
-	[] ->
-	    Node;
-	Gs ->
-	    Node1 = erl_syntax:make_tree(erl_syntax:type(Node),
-					 [[rewrite(T) || T <- Ts]
-					  || Ts <- Gs]),
-	    erl_syntax:copy_pos(Node, Node1)
+        [] ->
+            Node;
+        Gs ->
+            Node1 = erl_syntax:make_tree(erl_syntax:type(Node),
+                                         [[rewrite(T) || T <- Ts]
+                                          || Ts <- Gs]),
+            erl_syntax:copy_pos(Node, Node1)
     end.
 
 %% attempting a rescue operation on a token sequence for a single form
 %% if it could not be parsed after the normal treatment
 
 fix_form([{atom, _, ?pp_form}, {'(', _}, {')', _}, {'->', _},
-	  {atom, _, define}, {'(', _} | _]=Ts) ->
+          {atom, _, define}, {'(', _} | _]=Ts) ->
     case lists:reverse(Ts) of
-	[{dot, _}, {')', _} | _] ->
-	    {retry, Ts, fun fix_define/1};
-	[{dot, L} | Ts1] ->
-	    Ts2 = lists:reverse([{dot, L}, {')', L} | Ts1]),
-	    {retry, Ts2, fun fix_define/1};
-	_ ->
-	    error
+        [{dot, _}, {')', _} | _] ->
+            {retry, Ts, fun fix_define/1};
+        [{dot, L} | Ts1] ->
+            Ts2 = lists:reverse([{dot, L}, {')', L} | Ts1]),
+            {retry, Ts2, fun fix_define/1};
+        _ ->
+            error
     end;
 fix_form(_Ts) ->
     error.
 
 fix_define([{atom, L, ?pp_form}, {'(', _}, {')', _}, {'->', _},
-	    {atom, La, define}, {'(', _}, N, {',', _} | Ts]) ->
+            {atom, La, define}, {'(', _}, N, {',', _} | Ts]) ->
     [{dot, _}, {')', _} | Ts1] = lists:reverse(Ts),
     S = tokens_to_string(lists:reverse(Ts1)),
     A = erl_syntax:set_pos(erl_syntax:atom(define), La),
@@ -865,6 +865,18 @@ fix_define(_Ts) ->
 
 -spec tokens_to_string([term()]) -> string().
 
+tokens_to_string([{atom,_,A}, {')', _} | Ts]) ->
+    io_lib:write_atom(A) ++ [$) | tokens_to_string(Ts)];
+tokens_to_string([{string, _, S}, {')', _} | Ts]) ->
+    io_lib:write_string(S) ++ [$) | tokens_to_string(Ts)];
+tokens_to_string([{char, _, C}, {')', _} | Ts]) ->
+    io_lib:write_char(C) ++ [$) | tokens_to_string(Ts)];
+tokens_to_string([{float, _, F}, {')', _} | Ts]) ->
+    float_to_list(F) ++ [$) | tokens_to_string(Ts)];
+tokens_to_string([{integer, _, N}, {')', _} | Ts]) ->
+    integer_to_list(N) ++ [$) | tokens_to_string(Ts)];
+tokens_to_string([{var, _, A}, {')', _} | Ts]) ->
+    atom_to_list(A) ++ [$) | tokens_to_string(Ts)];
 tokens_to_string([{atom,_,A} | Ts]) ->
     io_lib:write_atom(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([{string, _, S} | Ts]) ->
@@ -879,6 +891,10 @@ tokens_to_string([{var, _, A} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
+tokens_to_string([{'(', _} | Ts]) ->
+    [$(|tokens_to_string(Ts)];
+tokens_to_string([{'?', _} | Ts]) ->
+    [$?|tokens_to_string(Ts)];
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
