@@ -879,6 +879,10 @@ tokens_to_string([{var, _, A} | Ts]) ->
     atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
+tokens_to_string([{',', _} | Ts]) ->
+    ", " ++ tokens_to_string(Ts); % we only keep spaces after ','
+tokens_to_string([{'->', _} | Ts]) ->
+    "-> " ++ tokens_to_string(Ts); % ...and '->'
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
@@ -886,6 +890,7 @@ tokens_to_string([]) ->
 
 maybe_space([]) -> "";
 maybe_space([{'?', _}|_]) -> " "; % Space before a macro
+maybe_space([{'->', _}|_]) -> " "; % Space before '->'
 maybe_space([{_, _}|_]) -> ""; % No space before (, ), {, etc...
 maybe_space([_|_]) -> " ". % Space before anything else
 
