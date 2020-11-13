@@ -435,11 +435,11 @@ parse_form(Dev, L0, Parser, Options) ->
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
         {ok, [{'#', L}, {'!', L} | _] = Ts, L1} -> % escript
-            erlang:display({"it's an escript!", Ts}),
             {Header, Rest} = lists:splitwith(
                 fun(Token) -> element(2, Token) == L end, Ts),
             case do_parse_form(Parser, Rest, L1, NoFail, Opt) of
                 {ok, Form, L2} ->
+                    erlang:display({"it's an escript!", Header, Form}),
                     {ok, erl_syntax:form_list([
                             erl_syntax:set_pos(
                                 erl_syntax:text(tokens_to_string(Header) ++ "\n"),
