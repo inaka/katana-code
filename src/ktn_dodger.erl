@@ -441,7 +441,7 @@ parse_form(Dev, L0, Parser, Options) ->
                 {ok, Form, L2} ->
                     {ok, erl_syntax:form_list([
                             erl_syntax:set_pos(
-                                erl_syntax:text(tokens_to_string(Header)),
+                                erl_syntax:text(tokens_to_string(Header) ++ "\n"),
                                 L
                             ),
                             Form
