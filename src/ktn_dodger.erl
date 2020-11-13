@@ -434,26 +434,43 @@ parse_form(Dev, L0, Parser, Options) ->
     Opt = #opt{clever = proplists:get_bool(clever, Options)},
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
-        {ok, Ts, L1} ->
-            case catch {ok, Parser(Ts, Opt)} of
-                {'EXIT', Term} ->
-                    {error, io_error(L1, {unknown, Term}), L1};
-                {error, Term} ->
-                    IoErr = io_error(L1, Term),
-                    {error, IoErr, L1};
-                {parse_error, _IoErr} when NoFail ->
-                    {ok, erl_syntax:set_pos(
-                           erl_syntax:text(tokens_to_string(Ts)),
-                           start_pos(Ts, L1)),
-                     L1};
-                {parse_error, IoErr} ->
-                    {error, IoErr, L1};
-                {ok, F} ->
-                    {ok, F, L1}
+        {ok, [{'#', L}, {'!', L} | _] = Ts, L1} -> % escript
+            {Header, Rest} = lists:splitwith(
+                fun(Token) -> element(2, Token) == L end, Ts),
+            case do_parse_form(Parser, Rest, L1, NoFail, Opt) of
+                {ok, Form, L2} ->
+                    {ok, erl_syntax:form_list([
+                            erl_syntax:set_pos(
+                                erl_syntax:text(tokens_to_string(Header)),
+                                L
+                            ),
+                            Form
+                        ]), L2};
+                Error ->
+                    Error
             end;
+        {ok, Ts, L1} -> do_parse_form(Parser, Ts, L1, NoFail, Opt);
         {error, _IoErr, _L1} = Err -> Err;
         {error, _Reason} -> {eof, L0}; % This is probably encoding problem
         {eof, _L1} = Eof -> Eof
+    end.
+
+do_parse_form(Parser, Ts, L1, NoFail, Opt) ->
+    case catch {ok, Parser(Ts, Opt)} of
+        {'EXIT', Term} ->
+            {error, io_error(L1, {unknown, Term}), L1};
+        {error, Term} ->
+            IoErr = io_error(L1, Term),
+            {error, IoErr, L1};
+        {parse_error, _IoErr} when NoFail ->
+            {ok, erl_syntax:set_pos(
+                   erl_syntax:text(tokens_to_string(Ts)),
+                   start_pos(Ts, L1)),
+             L1};
+        {parse_error, IoErr} ->
+            {error, IoErr, L1};
+        {ok, F} ->
+            {ok, F, L1}
     end.
 
 io_error(L, Desc) ->
