@@ -870,15 +870,29 @@ fix_form([{atom, _, ?pp_form}, {'(', _}, {')', _}, {'->', _},
           {atom, _, define}, {'(', _} | _]=Ts) ->
     case lists:reverse(Ts) of
         [{dot, _}, {')', _} | _] ->
-            {retry, Ts, fun fix_define/1};
+            {retry, Ts, fun fix_stringyfied_macros/1};
         [{dot, L} | Ts1] ->
             Ts2 = lists:reverse([{dot, L}, {')', L} | Ts1]),
-            {retry, Ts2, fun fix_define/1};
+            {retry, Ts2, fun fix_stringyfied_macros/1};
         _ ->
             error
     end;
 fix_form(_Ts) ->
     error.
+
+fix_stringyfied_macros(Ts) ->
+    {retry, fix_stringyfied_macros(Ts, []), fun fix_define/1}.
+
+fix_stringyfied_macros([], Ts) -> lists:reverse(Ts);
+fix_stringyfied_macros([{'?', Pos}, {atom, Pos, BadMacroName} | Rest], Ts) ->
+    MacroName =
+        case atom_to_list(BadMacroName) of
+            "?," ++ Name -> list_to_atom("??" ++ Name);
+            _ -> BadMacroName
+        end,
+    fix_stringyfied_macros(Rest, [{atom, Pos, MacroName} | Ts]);
+fix_stringyfied_macros([Other|Rest], Ts) ->
+    fix_stringyfied_macros(Rest, [Other|Ts]).
 
 fix_define([{atom, L, ?pp_form}, {'(', _}, {')', _}, {'->', _},
             {atom, La, define}, {'(', _}, N, {',', _} | Ts]) ->
