@@ -434,29 +434,43 @@ parse_form(Dev, L0, Parser, Options) ->
     Opt = #opt{clever = proplists:get_bool(clever, Options)},
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
-        {ok, [{'#', L}, {'!', L} | _] = Ts, L1} -> % escript
-            {Header, Rest} = lists:splitwith(
-                fun(Token) -> element(2, Token) == L end, Ts),
-            case do_parse_form(Parser, Rest, L1, NoFail, Opt) of
-                {ok, Form, L2} ->
-                    erlang:display({"it's an escript!", Header, Form}),
-                    {ok, erl_syntax:form_list([
-                            erl_syntax:set_pos(
-                                erl_syntax:text(tokens_to_string(Header) ++ "\n"),
-                                L
-                            ),
-                            Form
-                        ]), L2};
-                Error ->
-                    Error
+        {ok, Ts, L1} ->
+            case extract_escript_header(Ts) of
+                no_header -> parse_form(Parser, Ts, L1, NoFail, Opt);
+                {LineNo, {Header, Rest}} ->
+                    case parse_form(Parser, Rest, L1, NoFail, Opt) of
+                        {ok, Form, L2} ->
+                            {ok, erl_syntax:form_list([
+                                    erl_syntax:set_pos(
+                                        erl_syntax:text(tokens_to_string(Header)),
+                                        LineNo
+                                    ),
+                                    Form
+                                ]), L2};
+                        Error ->
+                            Error
+                    end
             end;
-        {ok, Ts, L1} -> do_parse_form(Parser, Ts, L1, NoFail, Opt);
         {error, _IoErr, _L1} = Err -> Err;
         {error, _Reason} -> {eof, L0}; % This is probably encoding problem
         {eof, _L1} = Eof -> Eof
     end.
 
-do_parse_form(Parser, Ts, L1, NoFail, Opt) ->
+extract_escript_header([{'#', LineNo}, {'!', LineNo} | _] = Ts) when is_integer(LineNo) ->
+    {LineNo, lists:splitwith(fun(Token) -> element(2, Token) == LineNo end, Ts)};
+extract_escript_header([{'#', Data}, {'!', _} | _] = Ts) when is_list(Data) ->
+    case lists:keyfind(location, 1, Data) of
+        {location, LineNo} ->
+            {LineNo, lists:splitwith(
+                        fun(Token) ->
+                            lists:keyfind(location, 1, element(2, Token)) == {location, LineNo}
+                        end, Ts)};
+        _ ->
+            no_header % something is broken
+    end;
+extract_escript_header(_) -> no_header.
+
+parse_form(Parser, Ts, L1, NoFail, Opt) ->
     case catch {ok, Parser(Ts, Opt)} of
         {'EXIT', Term} ->
             {error, io_error(L1, {unknown, Term}), L1};
