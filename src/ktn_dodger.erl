@@ -887,7 +887,7 @@ fix_stringyfied_macros([], Ts) -> lists:reverse(Ts);
 fix_stringyfied_macros([{'?', Pos}, {atom, Pos, BadMacroName} | Rest], Ts) ->
     MacroName =
         case atom_to_list(BadMacroName) of
-            "?," ++ Name -> list_to_atom("??" ++ Name);
+            "?," ++ Name -> list_to_atom("? ?" ++ Name);
             _ -> BadMacroName
         end,
     fix_stringyfied_macros(Rest, [{atom, Pos, MacroName} | Ts]);
