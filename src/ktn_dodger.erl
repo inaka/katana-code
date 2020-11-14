@@ -827,7 +827,7 @@ rewrite(Node) ->
                     N = erl_syntax:copy_pos(Node, erl_syntax:atom(A1)),
                     erl_syntax:copy_pos(Node, erl_syntax:macro(N));
                 ?var_prefix ++ As ->
-                    A1 = list_to_atom(As),
+                    A1 = list_to_atom([$?|As]),
                     N = erl_syntax:copy_pos(Node, erl_syntax:variable(A1)),
                     erl_syntax:copy_pos(Node, erl_syntax:macro(N));
                 _ ->
@@ -884,13 +884,13 @@ fix_stringyfied_macros(Ts) ->
     {retry, fix_stringyfied_macros(Ts, []), fun fix_define/1}.
 
 fix_stringyfied_macros([], Ts) -> lists:reverse(Ts);
-fix_stringyfied_macros([{'?', Pos}, {atom, Pos, BadMacroName} | Rest], Ts) ->
-    MacroName =
-        case atom_to_list(BadMacroName) of
-            "?," ++ Name -> list_to_atom("? ?" ++ Name);
-            _ -> BadMacroName
-        end,
-    fix_stringyfied_macros(Rest, [{atom, Pos, MacroName} | Ts]);
+fix_stringyfied_macros([{'?', Pos}, {atom, Pos, MacroName} | Rest], Ts) ->
+    case atom_to_list(MacroName) of
+        ?var_prefix ++ _ ->
+            fix_stringyfied_macros(Rest, [{atom, Pos, MacroName} | Ts]);
+        _ ->
+            fix_stringyfied_macros(Rest, [{atom, Pos, MacroName}, {'?', Pos} | Ts])
+    end;
 fix_stringyfied_macros([Other|Rest], Ts) ->
     fix_stringyfied_macros(Rest, [Other|Ts]).
 
