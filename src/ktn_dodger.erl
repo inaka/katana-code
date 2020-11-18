@@ -427,11 +427,17 @@ quick_parse_form(Dev, L0) ->
 quick_parse_form(Dev, L0, Options) ->
     parse_form(Dev, L0, fun quick_parser/2, Options).
 
--record(opt, {clever = false :: boolean()}).
+-record(opt, {
+    clever = false :: boolean(),
+    parse_macro_definitions = false :: boolean()
+}).
 
 parse_form(Dev, L0, Parser, Options) ->
     NoFail = proplists:get_bool(no_fail, Options),
-    Opt = #opt{clever = proplists:get_bool(clever, Options)},
+    Opt = #opt{
+        clever = proplists:get_bool(clever, Options),
+        parse_macro_definitions = proplists:get_bool(parse_macro_definitions, Options)
+    },
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
         {ok, Ts, L1} ->
@@ -499,20 +505,30 @@ start_pos([], L) ->
 %% Exception-throwing wrapper for the standard Erlang parser stage
 
 parse_tokens(Ts) ->
-    parse_tokens(Ts, fun fix_form/1).
+    parse_tokens(Ts, fun no_fix/1, fun fix_form/1).
 
-parse_tokens(Ts, Fix) ->
-    case erl_parse:parse_form(Ts) of
-        {ok, Form} ->
+
+%% @doc PreFix adjusts the tokens before parsing them.
+%%      PostFix adjusts the tokens after parsing them, only if erl_parse failed.
+parse_tokens(Ts, PreFix, PostFix) ->
+    case PreFix(Ts) of
+        {form, Form} ->
             Form;
-        {error, IoErr} ->
-            case Fix(Ts) of
-                {form, Form} ->
+        {retry, Ts1, PreFix1} ->
+            parse_tokens(Ts1, PreFix1, PostFix);
+        no_fix ->
+            case erl_parse:parse_form(Ts) of
+                {ok, Form} ->
                     Form;
-                {retry, Ts1, Fix1} ->
-                    parse_tokens(Ts1, Fix1);
-                error ->
-                    throw({parse_error, IoErr})
+                {error, IoErr} ->
+                    case PostFix(Ts) of
+                        {form, Form} ->
+                            Form;
+                        {retry, Ts1, PostFix1} ->
+                            parse_tokens(Ts1, PreFix, PostFix1);
+                        no_fix ->
+                            throw({parse_error, IoErr})
+                    end
             end
     end.
 
@@ -655,7 +671,12 @@ filter_form(T) ->
 normal_parser(Ts0, Opt) ->
     case scan_form(Ts0, Opt) of
         Ts when is_list(Ts) ->
-            rewrite_form(parse_tokens(Ts));
+            PreFix =
+                case Opt of
+                    #opt{parse_macro_definitions = true} -> fun no_fix/1;
+                    _ -> fun fix_define/1
+                end,
+            rewrite_form(parse_tokens(Ts, PreFix, fun fix_form/1));
         Node ->
             Node
     end.
@@ -875,10 +896,10 @@ fix_form([{atom, _, ?pp_form}, {'(', _}, {')', _}, {'->', _},
             Ts2 = lists:reverse([{dot, L}, {')', L} | Ts1]),
             {retry, Ts2, fun fix_stringyfied_macros/1};
         _ ->
-            error
+            no_fix
     end;
 fix_form(_Ts) ->
-    error.
+    no_fix.
 
 fix_stringyfied_macros(Ts) ->
     {retry, fix_stringyfied_macros(Ts, []), fun fix_define/1}.
@@ -904,7 +925,9 @@ fix_define([{atom, L, ?pp_form}, {'(', _}, {')', _}, {'->', _},
     Txt = erl_syntax:set_pos(erl_syntax:text(S), La),
     {form, erl_syntax:set_pos(erl_syntax:attribute(A, [N, Txt]), L)};
 fix_define(_Ts) ->
-    error.
+    no_fix.
+
+no_fix(_) -> no_fix.
 
 %% @spec tokens_to_string(Tokens::[term()]) -> string()
 %%
