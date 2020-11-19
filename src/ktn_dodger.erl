@@ -462,18 +462,12 @@ parse_form(Dev, L0, Parser, Options) ->
         {eof, _L1} = Eof -> Eof
     end.
 
-extract_escript_header([{'#', LineNo}, {'!', LineNo} | _] = Ts) when is_integer(LineNo) ->
-    {LineNo, lists:splitwith(fun(Token) -> element(2, Token) == LineNo end, Ts)};
-extract_escript_header([{'#', Data}, {'!', _} | _] = Ts) when is_list(Data) ->
-    case lists:keyfind(location, 1, Data) of
-        {location, LineNo} ->
-            {LineNo, lists:splitwith(
-                        fun(Token) ->
-                            lists:keyfind(location, 1, element(2, Token)) == {location, LineNo}
-                        end, Ts)};
-        _ ->
-            no_header % something is broken
-    end;
+extract_escript_header([{'#', Anno}, {'!', _} | _] = Ts) ->
+    LineNo = erl_anno:line(Anno),
+    {
+        LineNo,
+        lists:splitwith(fun(Token) -> erl_scan:line(Token) == LineNo end, Ts)
+    };
 extract_escript_header(_) -> no_header.
 
 parse_form(Parser, Ts, L1, NoFail, Opt) ->
@@ -514,8 +508,6 @@ parse_tokens(Ts, PreFix, PostFix) ->
     case PreFix(Ts) of
         {form, Form} ->
             Form;
-        {retry, Ts1, PreFix1} ->
-            parse_tokens(Ts1, PreFix1, PostFix);
         no_fix ->
             case erl_parse:parse_form(Ts) of
                 {ok, Form} ->
