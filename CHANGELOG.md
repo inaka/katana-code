@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.1](https://github.com/inaka/katana-code/tree/1.0.1) (2020-11-19)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.0.0...1.0.1)
+
+**Fixed bugs:**
+
+- Using macros in macro definitions breaks them [\#49](https://github.com/inaka/katana-code/issues/49)
+- Remove discrepancies [\#48](https://github.com/inaka/katana-code/issues/48)
+
+**Merged pull requests:**
+
+- \[Fix \#49\] Don't preprocess macros if we're not going to parse them later [\#51](https://github.com/inaka/katana-code/pull/51) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Fix \#48 by properly running dialyzer, xref and then linter [\#50](https://github.com/inaka/katana-code/pull/50) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [1.0.0](https://github.com/inaka/katana-code/tree/1.0.0) (2020-11-19)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/0.2.1...1.0.0)
