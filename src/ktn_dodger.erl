@@ -673,6 +673,9 @@ normal_parser(Ts0, Opt) ->
             Node
     end.
 
+scan_form([{'-', _L}, {atom, La, define} | Ts], #opt{parse_macro_definitions = false}) ->
+    [{atom, La, ?pp_form}, {'(', La}, {')', La}, {'->', La},
+     {atom, La, define} | Ts];
 scan_form([{'-', _L}, {atom, La, define} | Ts], Opt) ->
     [{atom, La, ?pp_form}, {'(', La}, {')', La}, {'->', La},
      {atom, La, define} | scan_macros(Ts, Opt)];
