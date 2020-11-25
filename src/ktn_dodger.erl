@@ -957,6 +957,10 @@ maybe_space(_,  []) -> "";
 maybe_space(C, [T|_]) -> maybe_space_between(C, erl_scan:category(T)).
 
 maybe_space_between(dot, _) -> ""; % No space at the end
+maybe_space_between('#', '!') -> ""; %  \
+maybe_space_between('!', '/') -> ""; %   \_ No space for escript headers
+maybe_space_between('/', atom) -> ""; %  /
+maybe_space_between(atom, '/') -> ""; % /
 maybe_space_between('#', _) -> ""; % No space for records and maps
 maybe_space_between(atom, '{') -> ""; % No space for records
 maybe_space_between('?', _) -> ""; % No space for macro names
