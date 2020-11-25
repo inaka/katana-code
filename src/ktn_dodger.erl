@@ -953,16 +953,16 @@ tokens_to_string([T | Ts]) ->
 tokens_to_string([]) ->
     "".
 
-maybe_space(_, []) -> "";
-maybe_space(dot, _) -> "";
+maybe_space(_,  []) -> "";
+maybe_space(C, [T|_]) -> maybe_space(C, erl_scan:category(T));
+maybe_space(dot, _) -> ""; % No space at the end
 maybe_space('#', _) -> ""; % No space for records and maps
-maybe_space(atom, [{'{', _} | _]) -> ""; % No space for records
-maybe_space('<<', _) -> ""; % No space at the start of binaries
+maybe_space(atom, '{') -> ""; % No space for records
 maybe_space('?', _) -> ""; % No space for macro names
-maybe_space('-', [{atom, _, _} | _]) -> ""; % No space for attributes
-maybe_space(atom, [{'(', _} | _]) -> ""; % No space for function calls
-maybe_space(var, [{'(', _} | _]) -> ""; % No space for function calls
-maybe_space(_, [_|_]) -> " ". % Space before anything else
+maybe_space('-', atom) -> ""; % No space for attributes
+maybe_space(atom, '(') -> ""; % No space for function calls
+maybe_space(var, '(') -> ""; % No space for function calls
+maybe_space(_, _) -> " ". % Space between anything else
 
 %% @spec format_error(Descriptor::term()) -> string()
 %% @hidden
