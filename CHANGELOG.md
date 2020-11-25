@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2](https://github.com/inaka/katana-code/tree/1.0.2) (2020-11-25)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.0.1...1.0.2)
+
+**Fixed bugs:**
+
+- Improve formatting in stringyfied macro definitions [\#52](https://github.com/inaka/katana-code/issues/52)
+
+**Merged pull requests:**
+
+- Be far more specific on how to stringify stuff [\#54](https://github.com/inaka/katana-code/pull/54) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [1.0.1](https://github.com/inaka/katana-code/tree/1.0.1) (2020-11-19)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/1.0.0...1.0.1)
