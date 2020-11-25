@@ -931,33 +931,38 @@ no_fix(_) -> no_fix.
 
 -spec tokens_to_string([term()]) -> string().
 
-tokens_to_string([{atom,_,A} | Ts]) ->
-    io_lib:write_atom(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{string, _, S} | Ts]) ->
-    io_lib:write_string(S) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{char, _, C} | Ts]) ->
-    io_lib:write_char(C) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{float, _, F} | Ts]) ->
-    float_to_list(F) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{integer, _, N} | Ts]) ->
-    integer_to_list(N) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{var, _, A} | Ts]) ->
-    atom_to_list(A) ++ maybe_space(Ts) ++ tokens_to_string(Ts);
-tokens_to_string([{dot, _} | Ts]) ->
-    ".\n" ++ tokens_to_string(Ts);
-tokens_to_string([{',', _} | Ts]) ->
-    ", " ++ tokens_to_string(Ts); % we only keep spaces after ','
-tokens_to_string([{'->', _} | Ts]) ->
-    " -> " ++ tokens_to_string(Ts); % ...and '->'
-tokens_to_string([{A, _} | Ts]) ->
-    atom_to_list(A) ++ tokens_to_string(Ts);
+token_to_string(T) ->
+    case erl_scan:text(T) of
+        undefined ->
+            token_to_string(erl_scan:category(T), erl_scan:symbol(T));
+        Text ->
+            Text
+    end.
+
+token_to_string(atom, A) -> io_lib:write_atom(A);
+token_to_string(string, S) -> io_lib:write_string(S);
+token_to_string(char, C) -> io_lib:write_char(C);
+token_to_string(float, F) -> lists:flatten(io_lib:format("~p", [F]));
+token_to_string(integer, N) -> lists:flatten(io_lib:format("~p", [N]));
+token_to_string(var, A) -> atom_to_list(A);
+token_to_string(dot, dot) -> ".\n";
+token_to_string(Same, Same) -> atom_to_list(Same).
+
+tokens_to_string([T | Ts]) ->
+    token_to_string(T) ++ maybe_space(erl_scan:category(T), Ts) ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
     "".
 
-maybe_space([]) -> "";
-maybe_space([{'?', _}|_]) -> " "; % Space before a macro
-maybe_space([{_, _}|_]) -> ""; % No space before (, ), {, etc...
-maybe_space([_|_]) -> " ". % Space before anything else
+maybe_space(_, []) -> "";
+maybe_space(dot, _) -> "";
+maybe_space('#', _) -> ""; % No space for records and maps
+maybe_space(atom, [{'{', _} | _]) -> ""; % No space for records
+maybe_space('<<', _) -> ""; % No space at the start of binaries
+maybe_space('?', _) -> ""; % No space for macro names
+maybe_space('-', [{atom, _, _} | _]) -> ""; % No space for attributes
+maybe_space(atom, [{'(', _} | _]) -> ""; % No space for function calls
+maybe_space(var, [{'(', _} | _]) -> ""; % No space for function calls
+maybe_space(_, [_|_]) -> " ". % Space before anything else
 
 %% @spec format_error(Descriptor::term()) -> string()
 %% @hidden
