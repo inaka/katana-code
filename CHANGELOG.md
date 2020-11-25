@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/inaka/katana-code/tree/1.0.3) (2020-11-25)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.0.2...1.0.3)
+
+**Merged pull requests:**
+
+- Fix escript parsing [\#55](https://github.com/inaka/katana-code/pull/55) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [1.0.2](https://github.com/inaka/katana-code/tree/1.0.2) (2020-11-25)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/1.0.1...1.0.2)
