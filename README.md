@@ -1,5 +1,7 @@
 # katana-code
 
+![build](https://github.com/inaka/katana-code/workflows/build/badge.svg)
+
 Katana Code is an Erlang library application containinig modules useful for processing Erlang code.
 
 # Contact Us
