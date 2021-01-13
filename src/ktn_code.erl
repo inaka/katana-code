@@ -38,24 +38,13 @@
       | lc | lc_expr | generate
       | bc | bc_expr | b_generate
       | op
-      | record_field | record_index
+      | record | record_field | record_index
       | block
-        %% Pre-Defined Module Attributes
-      | module | export | import | compile | vsn | on_load
-        %% Behaviour Module Attribute
-      | behaviour | behavior | callback
-        %% Record Definitions
-      | record
-        %% Preprocessor
-      | include | include_lib | define
-        %% Flow Control in Macros
-      | undef | ifdef | ifndef | else | endif | elif | error | warning
-        %% Setting File and Line
-      | file | line
-        %% Other attributes
-      | type | opaque
-      | export_type
-      | remote_type | ann_type | paren_type
+        %% Attributes
+      | module
+      | type | callback
+      | export | export_type
+      | remote_type | type | ann_type | paren_type
       | any.
 
 -type tree_node() ::
