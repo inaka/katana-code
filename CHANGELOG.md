@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.1.0](https://github.com/inaka/katana-code/tree/1.1.0) (2021-02-02)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.0.3...1.1.0)
+
+**Closed issues:**
+
+- Missing attribute definition elements for ktn\_code:type [\#53](https://github.com/inaka/katana-code/issues/53)
+- `ktn\_code:parse\_tree/1` issue while parsing for module attributes [\#43](https://github.com/inaka/katana-code/issues/43)
+
+**Merged pull requests:**
+
+- Compact strings directly when parsing, to preserve original formatting [\#59](https://github.com/inaka/katana-code/pull/59) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Fix broken CI [\#58](https://github.com/inaka/katana-code/pull/58) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+- Add GitHub Actions for CI [\#57](https://github.com/inaka/katana-code/pull/57) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+- Add some missing tree node types [\#56](https://github.com/inaka/katana-code/pull/56) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+
 ## [1.0.3](https://github.com/inaka/katana-code/tree/1.0.3) (2020-11-25)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/1.0.2...1.0.3)
