@@ -511,7 +511,6 @@ parse_tokens(Ts, PreFix, PostFix) ->
         {form, Form} ->
             Form;
         {retry, Ts1} ->
-            erlang:display(Ts1),
             parse_tokens(Ts1, PreFix, PostFix);
         no_fix ->
             case erl_parse:parse_form(Ts) of
