@@ -429,14 +429,16 @@ quick_parse_form(Dev, L0, Options) ->
 
 -record(opt, {
     clever = false :: boolean(),
-    parse_macro_definitions = false :: boolean()
+    parse_macro_definitions = false :: boolean(),
+    compact_strings = false :: boolean()
 }).
 
 parse_form(Dev, L0, Parser, Options) ->
     NoFail = proplists:get_bool(no_fail, Options),
     Opt = #opt{
         clever = proplists:get_bool(clever, Options),
-        parse_macro_definitions = proplists:get_bool(parse_macro_definitions, Options)
+        parse_macro_definitions = proplists:get_bool(parse_macro_definitions, Options),
+        compact_strings = proplists:get_bool(compact_strings, Options)
     },
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
@@ -508,6 +510,9 @@ parse_tokens(Ts, PreFix, PostFix) ->
     case PreFix(Ts) of
         {form, Form} ->
             Form;
+        {retry, Ts1} ->
+            erlang:display(Ts1),
+            parse_tokens(Ts1, PreFix, PostFix);
         no_fix ->
             case erl_parse:parse_form(Ts) of
                 {ok, Form} ->
@@ -663,14 +668,26 @@ filter_form(T) ->
 normal_parser(Ts0, Opt) ->
     case scan_form(Ts0, Opt) of
         Ts when is_list(Ts) ->
-            PreFix =
-                case Opt of
-                    #opt{parse_macro_definitions = true} -> fun no_fix/1;
-                    _ -> fun fix_define/1
-                end,
-            rewrite_form(parse_tokens(Ts, PreFix, fun fix_form/1));
+            rewrite_form(parse_tokens(Ts, normal_parser_prefix(Opt), fun fix_form/1));
         Node ->
             Node
+    end.
+
+normal_parser_prefix(#opt{parse_macro_definitions = true, compact_strings = false}) -> fun no_fix/1;
+normal_parser_prefix(#opt{parse_macro_definitions = true, compact_strings = true}) -> fun fix_contiguous_strings/1;
+normal_parser_prefix(#opt{parse_macro_definitions = false, compact_strings = false}) -> fun fix_define/1;
+normal_parser_prefix(#opt{parse_macro_definitions = false, compact_strings = true}) ->
+    fun(Ts) ->
+        case fix_contiguous_strings(Ts) of
+            no_fix -> fix_define(Ts);
+            {retry, Ts1} ->
+                case fix_define(Ts1) of
+                    no_fix ->
+                        {retry, Ts1};
+                    Other ->
+                        Other
+                end
+        end
     end.
 
 scan_form([{'-', _L}, {atom, La, define} | Ts], #opt{parse_macro_definitions = false}) ->
@@ -921,6 +938,31 @@ fix_define([{atom, L, ?pp_form}, {'(', _}, {')', _}, {'->', _},
     {form, erl_syntax:set_pos(erl_syntax:attribute(A, [N, Txt]), L)};
 fix_define(_Ts) ->
     no_fix.
+
+fix_contiguous_strings(Ts) ->
+    case fix_contiguous_strings(Ts, []) of
+        Ts ->
+            no_fix;
+        NextTs ->
+            {retry, NextTs}
+    end.
+
+fix_contiguous_strings([], Ts) -> lists:reverse(Ts);
+fix_contiguous_strings([{string, L1, S1} = First, {string, L2, S2} = Second | Rest], Ts) ->
+    case {erl_anno:text(L1), erl_anno:text(L2)} of
+        {T1, T2} when is_list(T1), is_list(T2) ->
+            Separator =
+                case {erl_anno:location(L1), erl_anno:location(L2)} of
+                    {L, L} -> $\s;
+                    {_, _} -> $\n % different lines
+                end,
+            NewL = erl_anno:set_text(T1 ++ [Separator|T2], L1),
+            fix_contiguous_strings([{string, NewL, S1 ++ S2} | Rest], Ts);
+        _ ->
+            fix_contiguous_strings([Second|Rest], [First|Ts])
+    end;
+fix_contiguous_strings([Other|Rest], Ts) ->
+    fix_contiguous_strings(Rest, [Other|Ts]).
 
 no_fix(_) -> no_fix.
 
