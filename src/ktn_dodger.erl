@@ -554,7 +554,7 @@ parse_tokens_as_terms(Ts, PreFix, PostFix) ->
     end.
 
 expression_dot() ->
-    erl_syntax:set_ann(erl_syntax:text("."), expression_dot).
+    erl_syntax:set_ann(erl_syntax:text("."), [expression_dot]).
 
 %% ---------------------------------------------------------------------
 %% Quick scanning/parsing - deletes macro definitions and other
