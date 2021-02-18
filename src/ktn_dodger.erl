@@ -516,12 +516,39 @@ parse_tokens(Ts, PreFix, PostFix) ->
             case erl_parse:parse_form(Ts) of
                 {ok, Form} ->
                     Form;
-                {error, IoErr} ->
+                {error, _IoErr} ->
                     case PostFix(Ts) of
                         {form, Form} ->
                             Form;
                         {retry, Ts1, PostFix1} ->
                             parse_tokens(Ts1, PreFix, PostFix1);
+                        no_fix ->
+                            parse_tokens_as_terms(Ts, PreFix, PostFix)
+                    end
+            end
+    end.
+
+%% @doc This handles config files, app.src, etc.
+%%      PreFix adjusts the tokens before parsing them.
+%%      PostFix adjusts the tokens after parsing them, only if erl_parse failed.
+parse_tokens_as_terms(Ts, PreFix, PostFix) ->
+    case PreFix(Ts) of
+        {form, Form} ->
+            Form;
+        {retry, Ts1} ->
+            parse_tokens_as_terms(Ts1, PreFix, PostFix);
+        no_fix ->
+            case erl_parse:parse_exprs(Ts) of
+                {ok, [Form]} ->
+                    Form;
+                {ok, Forms} ->
+                    erl_syntax:form_list(Forms);
+                {error, IoErr} ->
+                    case PostFix(Ts) of
+                        {form, Form} ->
+                            Form;
+                        {retry, Ts1, PostFix1} ->
+                            parse_tokens_as_terms(Ts1, PreFix, PostFix1);
                         no_fix ->
                             throw({parse_error, IoErr})
                     end
