@@ -540,7 +540,7 @@ parse_tokens_as_terms(Ts, PreFix, PostFix) ->
         no_fix ->
             case erl_parse:parse_exprs(Ts) of
                 {ok, Forms} ->
-                    erl_syntax:form_list(Forms ++ [floating_dot()]);
+                    erl_syntax:form_list(Forms ++ [expression_dot()]);
                 {error, IoErr} ->
                     case PostFix(Ts) of
                         {form, Form} ->
@@ -553,8 +553,8 @@ parse_tokens_as_terms(Ts, PreFix, PostFix) ->
             end
     end.
 
-floating_dot() ->
-    erl_syntax:set_ann(erl_syntax:text("."), floating_dot).
+expression_dot() ->
+    erl_syntax:set_ann(erl_syntax:text("."), expression_dot).
 
 %% ---------------------------------------------------------------------
 %% Quick scanning/parsing - deletes macro definitions and other
