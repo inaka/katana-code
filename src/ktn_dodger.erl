@@ -993,13 +993,9 @@ fix_contiguous_strings([Other|Rest], Ts) ->
 
 no_fix(_) -> no_fix.
 
-%% @spec tokens_to_string(Tokens::[term()]) -> string()
 %%
 %% @doc Generates a string corresponding to the given token sequence.
 %% The string can be re-tokenized to yield the same token list again.
-
--spec tokens_to_string([term()]) -> string().
-
 token_to_string(T) ->
     case erl_scan:text(T) of
         undefined ->
@@ -1017,6 +1013,7 @@ token_to_string(var, A) -> atom_to_list(A);
 token_to_string(dot, dot) -> ".\n";
 token_to_string(Same, Same) -> atom_to_list(Same).
 
+-spec tokens_to_string([term()]) -> string().
 tokens_to_string([T | Ts]) ->
     token_to_string(T) ++ maybe_space(erl_scan:category(T), Ts) ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
