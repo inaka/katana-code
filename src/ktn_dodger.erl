@@ -539,10 +539,8 @@ parse_tokens_as_terms(Ts, PreFix, PostFix) ->
             parse_tokens_as_terms(Ts1, PreFix, PostFix);
         no_fix ->
             case erl_parse:parse_exprs(Ts) of
-                {ok, [Form]} ->
-                    Form;
                 {ok, Forms} ->
-                    erl_syntax:form_list(Forms);
+                    erl_syntax:form_list(Forms ++ [erl_syntax:text(".")]);
                 {error, IoErr} ->
                     case PostFix(Ts) of
                         {form, Form} ->
