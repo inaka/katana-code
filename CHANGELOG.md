@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1](https://github.com/inaka/katana-code/tree/1.1.1) (2021-02-18)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.1.0...1.1.1)
+
+**Closed issues:**
+
+- Parse non-module files [\#60](https://github.com/inaka/katana-code/issues/60)
+
+**Merged pull requests:**
+
+- Fix \#60: Handle parsing of none-module files [\#61](https://github.com/inaka/katana-code/pull/61) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [1.1.0](https://github.com/inaka/katana-code/tree/1.1.0) (2021-02-02)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/1.0.3...1.1.0)
