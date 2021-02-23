@@ -112,7 +112,7 @@ do_get_line("\r" ++ RestStr, Result) ->
 do_get_line([Ch | RestStr], Result) ->
     do_get_line(RestStr, [Result, Ch]).
 
--spec get_until(module(), atom(), list(), term()) ->
+-spec get_until(module(), atom(), list(), eof | string()) ->
     {term(), string()}.
 get_until(Module, Function, XArgs, Str) ->
     apply_get_until(Module, Function, [], Str, XArgs).
