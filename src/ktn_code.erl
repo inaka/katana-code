@@ -250,7 +250,7 @@ to_str(Arg) when is_list(Arg) ->
 %%% Internal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--spec source_encoding(binary() | list()) -> latin1 | utf8.
+-spec source_encoding(binary()) -> latin1 | utf8.
 source_encoding(Source) ->
     Re = ".*\n?.*(coding *[:=] *(?<encoding>[-a-zA-Z0-9]+))",
     ReOpts = [firstline, {capture, all_names, list}],
@@ -836,7 +836,7 @@ to_map(Parsed) when is_tuple(Parsed) ->
 to_map(Parsed) ->
     throw({unexpected_abstract_form, Parsed}).
 
--spec macro_name(any()) -> string().
+-spec macro_name(erl_syntax:syntaxTree()) -> string().
 macro_name(Name) ->
   case erl_syntax:type(Name) of
     atom ->
@@ -855,7 +855,7 @@ macro_name(Name) ->
 %%      NOTE: Copied from ktn_lists not to bring the whole erlang-katana
 %%            repo as a dependency here
 %% @end
--spec split_when(fun(), list()) -> list().
+-spec split_when(fun((T) -> boolean()), [T]) -> [[T]].
 split_when(When, List) ->
     split_when(When, List, [[]]).
 
