@@ -97,6 +97,11 @@
 
 -type option() :: atom() | {atom(), term()}.
 
+-hank([{unnecessary_function_arguments, [
+            no_fix/1,
+            quick_parser/2
+       ]}]).
+
 %% =====================================================================
 %% @spec parse_file(File) -> {ok, Forms} | {error, errorinfo()}
 %%       File = file:filename()

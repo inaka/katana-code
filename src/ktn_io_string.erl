@@ -5,12 +5,15 @@
 -export([ start_link/1
         , init/1
         , loop/1
+        , skip/2
         , skip/3
         ]).
 
 -type state() :: #{ buffer   := string()
                   , original := string()
                   }.
+
+-hank([{unnecessary_function_arguments, [skip/3]}]).
 
 %%------------------------------------------------------------------------------
 %% API
@@ -129,11 +132,16 @@ apply_get_until(Module, Function, State, String, XArgs) ->
 
 -spec skip(string() | {cont, integer(), string()}, term(), integer()) ->
     {more, {cont, integer(), string()}} | {done, integer(), string()}.
-skip(Str, _Data, Length) when is_list(Str) ->
+skip(Str, _Data, Length) ->
+    skip(Str, Length).
+
+-spec skip(string() | {cont, integer(), string()}, integer()) ->
+    {more, {cont, integer(), string()}} | {done, integer(), string()}.
+skip(Str, Length) when is_list(Str) ->
     {more, {cont, Length, Str}};
-skip({cont, 0, Str}, _Data, Length) ->
+skip({cont, 0, Str}, Length) ->
     {done, Length, Str};
-skip({cont, Length, []}, _Data, Length) ->
+skip({cont, Length, []}, Length) ->
     {done, eof, []};
-skip({cont, Length, [_ | RestStr]}, _Data, _Length) ->
+skip({cont, Length, [_ | RestStr]}, _Length) ->
     {more, {cont, Length - 1, RestStr}}.
