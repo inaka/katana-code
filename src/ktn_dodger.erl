@@ -86,10 +86,6 @@
 -define(pp_form, '?preprocessor declaration?').
 
 
-%% @type errorinfo() = {ErrorLine::integer(),
-%%                      Module::atom(),
-%%                      Descriptor::term()}.
-%%
 %% This is a so-called Erlang I/O ErrorInfo structure; see the {@link
 %% //stdlib/io} module for details.
 
@@ -103,10 +99,6 @@
        ]}]).
 
 %% =====================================================================
-%% @spec parse_file(File) -> {ok, Forms} | {error, errorinfo()}
-%%       File = file:filename()
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @equiv parse_file(File, [])
 
 -spec parse_file(file:filename()) ->
@@ -115,11 +107,6 @@
 parse_file(File) ->
     parse_file(File, []).
 
-%% @spec parse_file(File, Options) -> {ok, Forms} | {error, errorinfo()}
-%%       File = file:filename()
-%%       Options = [term()]
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @doc Reads and parses a file. If successful, `{ok, Forms}'
 %% is returned, where `Forms' is a list of abstract syntax
 %% trees representing the "program forms" of the file (cf.
@@ -155,10 +142,6 @@ parse_file(File) ->
 parse_file(File, Options) ->
     parse_file(File, fun parse/3, Options).
 
-%% @spec quick_parse_file(File) -> {ok, Forms} | {error, errorinfo()}
-%%       File = file:filename()
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @equiv quick_parse_file(File, [])
 
 -spec quick_parse_file(file:filename()) ->
@@ -167,12 +150,6 @@ parse_file(File, Options) ->
 quick_parse_file(File) ->
     quick_parse_file(File, []).
 
-%% @spec quick_parse_file(File, Options) ->
-%%           {ok, Forms} | {error, errorinfo()}
-%%       File = file:filename()
-%%       Options = [term()]
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @doc Similar to {@link parse_file/2}, but does a more quick-and-dirty
 %% processing of the code. Macro definitions and other preprocessor
 %% directives are discarded, and all macro calls are replaced with
@@ -232,7 +209,6 @@ find_invalid_unicode([H|T]) ->
 find_invalid_unicode([]) -> none.
 
 %% =====================================================================
-%% @spec parse(IODevice) -> {ok, Forms} | {error, errorinfo()}
 %% @equiv parse(IODevice, 1)
 
 -spec parse(file:io_device()) -> {'ok', erl_syntax:forms()}.
@@ -240,11 +216,6 @@ find_invalid_unicode([]) -> none.
 parse(Dev) ->
     parse(Dev, 1).
 
-%% @spec parse(IODevice, StartLine) -> {ok, Forms} | {error, errorinfo()}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @equiv parse(IODevice, StartLine, [])
 %% @see parse/1
 
@@ -253,13 +224,6 @@ parse(Dev) ->
 parse(Dev, L) ->
     parse(Dev, L, []).
 
-%% @spec parse(IODevice, StartLine, Options) ->
-%%           {ok, Forms} | {error, errorinfo()}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Options = [term()]
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @doc Reads and parses program text from an I/O stream. Characters are
 %% read from `IODevice' until end-of-file; apart from this, the
 %% behaviour is the same as for {@link parse_file/2}. `StartLine' is the
@@ -276,7 +240,6 @@ parse(Dev, L) ->
 parse(Dev, L0, Options) ->
     parse(Dev, L0, fun parse_form/3, Options).
 
-%% @spec quick_parse(IODevice) -> {ok, Forms} | {error, errorinfo()}
 %% @equiv quick_parse(IODevice, 1)
 
 -spec quick_parse(file:io_device()) ->
@@ -285,12 +248,6 @@ parse(Dev, L0, Options) ->
 quick_parse(Dev) ->
     quick_parse(Dev, 1).
 
-%% @spec quick_parse(IODevice, StartLine) ->
-%%           {ok, Forms} | {error, errorinfo()}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @equiv quick_parse(IODevice, StartLine, [])
 %% @see quick_parse/1
 
@@ -300,13 +257,6 @@ quick_parse(Dev) ->
 quick_parse(Dev, L) ->
     quick_parse(Dev, L, []).
 
-%% @spec (IODevice, StartLine, Options) ->
-%%           {ok, Forms} | {error, errorinfo()}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Options = [term()]
-%%       Forms = [erl_syntax:syntaxTree()]
-%%
 %% @doc Similar to {@link parse/3}, but does a more quick-and-dirty
 %% processing of the code. See {@link quick_parse_file/2} for details.
 %%
@@ -338,14 +288,6 @@ parse(Dev, L0, Fs, Parser, Options) ->
 
 
 %% =====================================================================
-%% @spec parse_form(IODevice, StartLine) -> {ok, Form, LineNo}
-%%                                        | {eof, LineNo}
-%%                                        | {error, errorinfo(), LineNo}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Form = erl_syntax:syntaxTree()
-%%       LineNo = integer()
-%%
 %% @equiv parse_form(IODevice, StartLine, [])
 %%
 %% @see quick_parse_form/2
@@ -357,17 +299,6 @@ parse(Dev, L0, Fs, Parser, Options) ->
 parse_form(Dev, L0) ->
     parse_form(Dev, L0, []).
 
-%% @spec parse_form(IODevice, StartLine, Options) ->
-%%           {ok, Form, LineNo}
-%%         | {eof, LineNo}
-%%         | {error, errorinfo(), LineNo}
-%%
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Options = [term()]
-%%       Form = erl_syntax:syntaxTree()
-%%       LineNo = integer()
-%%
 %% @doc Reads and parses a single program form from an I/O stream.
 %% Characters are read from `IODevice' until an end-of-form
 %% marker is found (a period character followed by whitespace), or until
@@ -387,15 +318,6 @@ parse_form(Dev, L0) ->
 parse_form(Dev, L0, Options) ->
     parse_form(Dev, L0, fun normal_parser/2, Options).
 
-%% @spec quick_parse_form(IODevice, StartLine) ->
-%%           {ok, Form, LineNo}
-%%         | {eof, LineNo}
-%%         | {error, errorinfo(), LineNo}
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Form = erl_syntax:syntaxTree() | none
-%%       LineNo = integer()
-%%
 %% @equiv quick_parse_form(IODevice, StartLine, [])
 %%
 %% @see parse_form/2
@@ -407,17 +329,6 @@ parse_form(Dev, L0, Options) ->
 quick_parse_form(Dev, L0) ->
     quick_parse_form(Dev, L0, []).
 
-%% @spec quick_parse_form(IODevice, StartLine, Options) ->
-%%           {ok, Form, LineNo}
-%%         | {eof, LineNo}
-%%         | {error, errorinfo(), LineNo}
-%%
-%%       IODevice = pid()
-%%       StartLine = integer()
-%%       Options = [term()]
-%%       Form = erl_syntax:syntaxTree()
-%%       LineNo = integer()
-%%
 %% @doc Similar to {@link parse_form/3}, but does a more quick-and-dirty
 %% processing of the code. See {@link quick_parse_file/2} for details.
 %%
@@ -651,7 +562,6 @@ quick_macro_string(A) ->
     "(?" ++ atom_to_list(A) ++ ")".
 
 %% Skipping to the end of a macro call, tracking open/close constructs.
-%% @spec (Tokens) -> {Skipped, Rest}
 
 skip_macro_args([{'(',_}=T | Ts]) ->
     skip_macro_args(Ts, [')'], [T]);
@@ -1040,7 +950,6 @@ maybe_space_between(atom, '(') -> ""; % No space for function calls
 maybe_space_between(var, '(') -> ""; % No space for function calls
 maybe_space_between(_, _) -> " ". % Space between anything else
 
-%% @spec format_error(Descriptor::term()) -> string()
 %% @hidden
 %% @doc Callback function for formatting error descriptors. Not for
 %% normal use.
