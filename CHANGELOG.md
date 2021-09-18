@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/inaka/katana-code/tree/1.2.0) (2021-09-18)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.1.2...1.2.0)
+
+**Merged pull requests:**
+
+- Add pre\_fixer and post\_fixer options to the dodger [\#67](https://github.com/inaka/katana-code/pull/67) ([elbrujohalcon](https://github.com/elbrujohalcon))
+- Allow for analysis under rebar3\_hank [\#65](https://github.com/inaka/katana-code/pull/65) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+- Increase consumer confidence [\#64](https://github.com/inaka/katana-code/pull/64) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+- Move to a GitHub action \(instead of container-based\) CI approach [\#63](https://github.com/inaka/katana-code/pull/63) ([paulo-ferraz-oliveira](https://github.com/paulo-ferraz-oliveira))
+
+## [1.1.2](https://github.com/inaka/katana-code/tree/1.1.2) (2021-02-23)
+
+[Full Changelog](https://github.com/inaka/katana-code/compare/1.1.1...1.1.2)
+
+**Merged pull requests:**
+
+- Remove discrepancies. Thanks, dialyzer! [\#62](https://github.com/inaka/katana-code/pull/62) ([elbrujohalcon](https://github.com/elbrujohalcon))
+
 ## [1.1.1](https://github.com/inaka/katana-code/tree/1.1.1) (2021-02-18)
 
 [Full Changelog](https://github.com/inaka/katana-code/compare/1.1.0...1.1.1)
