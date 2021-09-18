@@ -343,13 +343,15 @@ quick_parse_form(Dev, L0) ->
 quick_parse_form(Dev, L0, Options) ->
     parse_form(Dev, L0, fun quick_parser/2, Options).
 
--type fixer() :: fun((erl_scan:tokens()) -> no_fix | {retry, erl_scan:tokens()}).
+-type pre_fixer() :: fun((erl_scan:tokens()) -> no_fix | {retry, erl_scan:tokens()}).
+-type post_fixer() :: fun((erl_parse:abstract_form()) -> no_fix | {form, erl_parse:abstract_form()}).
 
 -record(opt, {
     clever = false :: boolean(),
     parse_macro_definitions = false :: boolean(),
     compact_strings = false :: boolean(),
-    pre_fixer = fun no_fix/1 :: fixer()
+    pre_fixer = fun no_fix/1 :: pre_fixer(),
+    post_fixer = fun no_fix/1 :: post_fixer()
 }).
 
 parse_form(Dev, L0, Parser, Options) ->
@@ -358,7 +360,8 @@ parse_form(Dev, L0, Parser, Options) ->
         clever = proplists:get_bool(clever, Options),
         parse_macro_definitions = proplists:get_bool(parse_macro_definitions, Options),
         compact_strings = proplists:get_bool(compact_strings, Options),
-        pre_fixer = proplists:get_value(pre_fixer, Options, fun no_fix/1)
+        pre_fixer = proplists:get_value(pre_fixer, Options, fun no_fix/1),
+        post_fixer = proplists:get_value(post_fixer, Options, fun no_fix/1)
     },
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
@@ -421,52 +424,58 @@ start_pos([], L) ->
 %% Exception-throwing wrapper for the standard Erlang parser stage
 
 parse_tokens(Ts) ->
-    parse_tokens(Ts, fun no_fix/1, fun fix_form/1).
+    parse_tokens(Ts, fun no_fix/1, fun fix_form/1, fun no_fix/1).
 
 
 %% @doc PreFix adjusts the tokens before parsing them.
-%%      PostFix adjusts the tokens after parsing them, only if erl_parse failed.
-parse_tokens(Ts, PreFix, PostFix) ->
+%%      FormFix adjusts the tokens after parsing them, if erl_parse failed.
+%%      PostFix adjusts the forms after parsing them, if erl_parse worked.
+parse_tokens(Ts, PreFix, FormFix, PostFix) ->
     case PreFix(Ts) of
         {form, Form} ->
             Form;
         {retry, Ts1} ->
-            parse_tokens(Ts1, PreFix, PostFix);
+            parse_tokens(Ts1, PreFix, FormFix, PostFix);
         no_fix ->
             case erl_parse:parse_form(Ts) of
                 {ok, Form} ->
-                    Form;
+                    case PostFix(Form) of
+                        no_fix ->
+                            Form;
+                        {form, NewForm} ->
+                            NewForm
+                    end;
                 {error, _IoErr} ->
-                    case PostFix(Ts) of
+                    case FormFix(Ts) of
                         {form, Form} ->
                             Form;
-                        {retry, Ts1, PostFix1} ->
-                            parse_tokens(Ts1, PreFix, PostFix1);
+                        {retry, Ts1, FormFix1} ->
+                            parse_tokens(Ts1, PreFix, FormFix1, PostFix);
                         no_fix ->
-                            parse_tokens_as_terms(Ts, PreFix, PostFix)
+                            parse_tokens_as_terms(Ts, PreFix, FormFix)
                     end
             end
     end.
 
 %% @doc This handles config files, app.src, etc.
 %%      PreFix adjusts the tokens before parsing them.
-%%      PostFix adjusts the tokens after parsing them, only if erl_parse failed.
-parse_tokens_as_terms(Ts, PreFix, PostFix) ->
+%%      FormFix adjusts the tokens after parsing them, only if erl_parse failed.
+parse_tokens_as_terms(Ts, PreFix, FormFix) ->
     case PreFix(Ts) of
         {form, Form} ->
             Form;
         {retry, Ts1} ->
-            parse_tokens_as_terms(Ts1, PreFix, PostFix);
+            parse_tokens_as_terms(Ts1, PreFix, FormFix);
         no_fix ->
             case erl_parse:parse_exprs(Ts) of
                 {ok, Forms} ->
                     erl_syntax:form_list(Forms ++ [expression_dot()]);
                 {error, IoErr} ->
-                    case PostFix(Ts) of
+                    case FormFix(Ts) of
                         {form, Form} ->
                             Form;
-                        {retry, Ts1, PostFix1} ->
-                            parse_tokens_as_terms(Ts1, PreFix, PostFix1);
+                        {retry, Ts1, FormFix1} ->
+                            parse_tokens_as_terms(Ts1, PreFix, FormFix1);
                         no_fix ->
                             throw({parse_error, IoErr})
                     end
@@ -614,10 +623,18 @@ filter_form(T) ->
 normal_parser(Ts0, Opt) ->
     case scan_form(Ts0, Opt) of
         Ts when is_list(Ts) ->
-            rewrite_form(parse_tokens(Ts, normal_parser_prefix(Opt), fun fix_form/1));
+            rewrite_form(
+                parse_tokens(
+                    Ts,
+                    normal_parser_prefix(Opt),
+                    fun fix_form/1,
+                    Opt#opt.post_fixer
+                )
+            );
         Node ->
             Node
     end.
+
 normal_parser_prefix(#opt{pre_fixer = PreFixer} = Opt) ->
     DefaultPrefix = default_prefix(Opt),
     fun(Ts) ->
