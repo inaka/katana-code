@@ -343,10 +343,13 @@ quick_parse_form(Dev, L0) ->
 quick_parse_form(Dev, L0, Options) ->
     parse_form(Dev, L0, fun quick_parser/2, Options).
 
+-type fixer() :: fun((erl_scan:tokens()) -> no_fix | {retry, erl_scan:tokens()}).
+
 -record(opt, {
     clever = false :: boolean(),
     parse_macro_definitions = false :: boolean(),
-    compact_strings = false :: boolean()
+    compact_strings = false :: boolean(),
+    pre_fixer = fun no_fix/1 :: fixer()
 }).
 
 parse_form(Dev, L0, Parser, Options) ->
@@ -354,7 +357,8 @@ parse_form(Dev, L0, Parser, Options) ->
     Opt = #opt{
         clever = proplists:get_bool(clever, Options),
         parse_macro_definitions = proplists:get_bool(parse_macro_definitions, Options),
-        compact_strings = proplists:get_bool(compact_strings, Options)
+        compact_strings = proplists:get_bool(compact_strings, Options),
+        pre_fixer = proplists:get_value(pre_fixer, Options, fun no_fix/1)
     },
     ScanOpts = proplists:get_value(scan_opts, Options, []),
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
@@ -614,11 +618,25 @@ normal_parser(Ts0, Opt) ->
         Node ->
             Node
     end.
+normal_parser_prefix(#opt{pre_fixer = PreFixer} = Opt) ->
+    DefaultPrefix = default_prefix(Opt),
+    fun(Ts) ->
+        case PreFixer(Ts) of
+            no_fix -> DefaultPrefix(Ts);
+            {retry, Ts1} ->
+                case DefaultPrefix(Ts1) of
+                    no_fix ->
+                        {retry, Ts1};
+                    Other ->
+                        Other
+                end
+        end
+    end.
 
-normal_parser_prefix(#opt{parse_macro_definitions = true, compact_strings = false}) -> fun no_fix/1;
-normal_parser_prefix(#opt{parse_macro_definitions = true, compact_strings = true}) -> fun fix_contiguous_strings/1;
-normal_parser_prefix(#opt{parse_macro_definitions = false, compact_strings = false}) -> fun fix_define/1;
-normal_parser_prefix(#opt{parse_macro_definitions = false, compact_strings = true}) ->
+default_prefix(#opt{parse_macro_definitions = true, compact_strings = false}) -> fun no_fix/1;
+default_prefix(#opt{parse_macro_definitions = true, compact_strings = true}) -> fun fix_contiguous_strings/1;
+default_prefix(#opt{parse_macro_definitions = false, compact_strings = false}) -> fun fix_define/1;
+default_prefix(#opt{parse_macro_definitions = false, compact_strings = true}) ->
     fun(Ts) ->
         case fix_contiguous_strings(Ts) of
             no_fix -> fix_define(Ts);
