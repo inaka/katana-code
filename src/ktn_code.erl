@@ -333,6 +333,12 @@ to_map({match, Attrs, Left, Right}) ->
                  text => get_text(Attrs)},
       content => to_map([Left, Right])};
 
+to_map({maybe_match, Attrs, Left, Right}) ->
+    #{type => maybe_match,
+      attrs => #{location => get_location(Attrs),
+                 text => get_text(Attrs)},
+      content => to_map([Left, Right])};
+
 to_map({tuple, Attrs, Elements}) ->
     #{type => tuple,
       attrs => #{location => get_location(Attrs),
@@ -496,6 +502,22 @@ to_map({try_after, Attrs, AfterBody}) ->
       attrs => #{location => get_location(Attrs),
                  text => get_text(Attrs)},
       content => to_map(AfterBody)};
+
+%% maybe..else..end
+
+to_map({'maybe', Attrs, Body, Else}) ->
+    MaybeBody = to_map(Body),
+    MaybeElse = to_map(Else),
+    #{type => 'maybe',
+      attrs => #{location => get_location(Attrs),
+                 text => get_text(Attrs)},
+      content => MaybeBody ++ [MaybeElse]};
+
+to_map({'else', Attrs, Clauses}) ->
+    #{type => 'else',
+      attrs => #{location => get_location(Attrs),
+                 text => get_text(Attrs)},
+      content => to_map(Clauses)};
 
 %% if
 

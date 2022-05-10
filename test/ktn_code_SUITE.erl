@@ -15,6 +15,12 @@
          to_string/1
         ]).
 
+-if(?OTP_RELEASE >= 25).
+-export([
+         parse_maybe/1
+        ]).
+-endif.
+
 -define(EXCLUDED_FUNS,
         [
          module_info,
@@ -125,6 +131,23 @@ to_string(_Config) ->
     "atom" = ktn_code:to_str(atom),
 
     ok.
+
+-if(?OTP_RELEASE >= 25).
+-spec parse_maybe(config()) -> ok.
+parse_maybe(_Config) ->
+    %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
+
+    #{ type := root
+     , content :=
+           [#{ type := function
+             , content :=
+                   [#{ type := clause
+                     , content := [#{type := 'maybe'}]}]
+             }]
+     } = ktn_code:parse_tree(<<"foo() -> maybe ok ?= ok else _ -> ng end.">>),
+
+    ok.
+-endif.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Helper
