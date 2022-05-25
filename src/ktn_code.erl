@@ -3,6 +3,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -module(ktn_code).
 
+-elvis([{elvis_style, dont_repeat_yourself, #{min_complexity => 25}}]).
+
 -export([beam_to_string/1, beam_to_erl/2, parse_tree/1, eval/1, consult/1, to_str/1]).
 %% Getters
 -export([type/1, attr/2, node_attr/2, content/1]).
@@ -19,7 +21,6 @@
     behaviour | behavior | callback | record | include | include_lib | define | undef |
     ifdef | ifndef | else | endif | elif | error | warning | file | line | type | opaque |
     export_type | remote_type | ann_type | paren_type | any.
-
 -type tree_node() ::
     #{type => tree_node_type(),
       attrs => map(),

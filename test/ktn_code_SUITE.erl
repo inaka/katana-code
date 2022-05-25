@@ -45,8 +45,9 @@ end_per_suite(Config) ->
 consult(_Config) ->
     [{a}, {b}] = ktn_code:consult("{a}. {b}."),
     [] = ktn_code:consult(""),
-    [{a}, {b}, {c, d, e}] = ktn_code:consult("{a}. {b}. {c, d, e}."),
-    [{a}, {b}, {c, d, e}] = ktn_code:consult("{a}.\r\n{b}.\r\n{c, d, e}."),
+    Expected = [{a}, {b}, {c, d, e}],
+    Expected = ktn_code:consult("{a}. {b}. {c, d, e}."),
+    Expected = ktn_code:consult("{a}.\r\n{b}.\r\n{c, d, e}."),
 
     [{'.'}] = ktn_code:consult("{'.'}.\n"),
     [{<<"ble.bla">>}, {"github.com"}] =
