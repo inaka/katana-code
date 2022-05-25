@@ -19,7 +19,7 @@
     map_field_exact | lc | lc_expr | generate | bc | bc_expr | b_generate | op |
     record_field | record_index | block | module | export | import | compile | vsn | on_load |
     behaviour | behavior | callback | record | include | include_lib | define | undef |
-    ifdef | ifndef | else | endif | elif | error | warning | file | line | type | opaque |
+    ifdef | ifndef | 'else' | endif | elif | error | warning | file | line | type | opaque |
     export_type | remote_type | ann_type | paren_type | any.
 -type tree_node() ::
     #{type => tree_node_type(),
@@ -431,14 +431,14 @@ to_map({try_after, Attrs, AfterBody}) ->
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       content => to_map(AfterBody)};
 %% maybe..else..end
-to_map({maybe, Attrs, Body, Else}) ->
+to_map({'maybe', Attrs, Body, Else}) ->
     MaybeBody = to_map(Body),
     MaybeElse = to_map(Else),
-    #{type => maybe,
+    #{type => 'maybe',
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       content => MaybeBody ++ [MaybeElse]};
-to_map({else, Attrs, Clauses}) ->
-    #{type => else,
+to_map({'else', Attrs, Clauses}) ->
+    #{type => 'else',
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       content => to_map(Clauses)};
 %% if

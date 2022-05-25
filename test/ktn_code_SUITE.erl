@@ -14,11 +14,7 @@
 
 -type config() :: [{atom(), term()}].
 
--if(?OTP_RELEASE >= 23).
-
 -behaviour(ct_suite).
-
--endif.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Common test
@@ -123,7 +119,7 @@ parse_maybe(_Config) ->
     %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
     #{type := root,
       content :=
-          [#{type := function, content := [#{type := clause, content := [#{type := maybe}]}]}]} =
+          [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]} =
         ktn_code:parse_tree(<<"foo() -> maybe ok ?= ok else _ -> ng end.">>),
 
     ok.
