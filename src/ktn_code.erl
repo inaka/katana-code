@@ -430,6 +430,12 @@ to_map({try_after, Attrs, AfterBody}) ->
     #{type => try_after,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       content => to_map(AfterBody)};
+%% maybe..end
+to_map({'maybe', Attrs, Body}) ->
+    MaybeBody = to_map(Body),
+    #{type => 'maybe',
+      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+      content => MaybeBody};
 %% maybe..else..end
 to_map({'maybe', Attrs, Body, Else}) ->
     MaybeBody = to_map(Body),

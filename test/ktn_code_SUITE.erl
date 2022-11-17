@@ -6,7 +6,7 @@
 
 -if(?OTP_RELEASE >= 25).
 
--export([parse_maybe/1]).
+-export([parse_maybe/1, parse_maybe_else/1]).
 
 -endif.
 
@@ -116,6 +116,16 @@ to_string(_Config) ->
 
 -spec parse_maybe(config()) -> ok.
 parse_maybe(_Config) ->
+    %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
+    #{type := root,
+      content :=
+          [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]} =
+        ktn_code:parse_tree(<<"foo() -> maybe ok ?= ok end.">>),
+
+    ok.
+
+-spec parse_maybe_else(config()) -> ok.
+parse_maybe_else(_Config) ->
     %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
     #{type := root,
       content :=
