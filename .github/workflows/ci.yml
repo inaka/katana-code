@@ -6,7 +6,7 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -34,6 +34,8 @@ jobs:
       run: ERL_FLAGS="-enable-feature all" rebar3 compile
     - name: Format check
       run: ERL_FLAGS="-enable-feature all" rebar3 format --verify
-    - name: Run tests and verifications
+    - name: Run tests and verifications (features not enabled)
+      run: rebar3 test
+    - name: Run tests and verifications (features enabled)
       run: ERL_FLAGS="-enable-feature all" rebar3 test
 

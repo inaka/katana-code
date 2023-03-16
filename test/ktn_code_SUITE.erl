@@ -23,7 +23,16 @@
 -spec all() -> [atom()].
 all() ->
     Exports = ?MODULE:module_info(exports),
-    [F || {F, _} <- Exports, not lists:member(F, ?EXCLUDED_FUNS)].
+    %% Do not test maybe expressions if the feature is not enabled in the emulator
+    DisabledMaybeTests =
+        case lists:member(maybe_expr, enabled_features()) of
+            true ->
+                [];
+            false ->
+                [parse_maybe, parse_maybe_else]
+        end,
+    Excluded = ?EXCLUDED_FUNS ++ DisabledMaybeTests,
+    [F || {F, _} <- Exports, not lists:member(F, Excluded)].
 
 -spec init_per_suite(config()) -> config().
 init_per_suite(Config) ->
@@ -32,6 +41,14 @@ init_per_suite(Config) ->
 -spec end_per_suite(config()) -> config().
 end_per_suite(Config) ->
     Config.
+
+enabled_features() ->
+    try
+        erl_features:enabled()
+    catch
+        error:undef ->
+            []
+    end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Test Cases
