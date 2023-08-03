@@ -334,7 +334,7 @@ quick_parse_form(Dev, L0) ->
 quick_parse_form(Dev, L0, Options) ->
     parse_form(Dev, L0, fun quick_parser/2, Options).
 
--type pre_fixer() :: fun((erl_scan:tokens()) -> no_fix | {retry, erl_scan:tokens()}).
+-type pre_fixer() :: fun(([erl_scan:token()]) -> no_fix | {retry, [erl_scan:token()]}).
 -type post_fixer() ::
     fun((erl_parse:abstract_form()) -> no_fix | {form, erl_parse:abstract_form()}).
 
