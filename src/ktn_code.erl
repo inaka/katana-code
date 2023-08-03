@@ -4,12 +4,13 @@
 -module(ktn_code).
 
 -elvis([{elvis_style, dont_repeat_yourself, #{min_complexity => 25}}]).
+-elvis([{elvis_style, no_throw, disable}]).
 
 -export([beam_to_string/1, beam_to_erl/2, parse_tree/1, eval/1, consult/1, to_str/1]).
 %% Getters
 -export([type/1, attr/2, node_attr/2, content/1]).
 
--export_type([tree_node/0, tree_node_type/0]).
+-export_type([tree_node/0, tree_node_type/0, beam_lib_beam/0]).
 
 -type tree_node_type() ::
     root | function | clause | match | tuple | atom | integer | float | string | char |
@@ -269,7 +270,7 @@ get_location(Attrs) when is_list(Attrs) ->
         _ ->
             {Line, Column}
     end;
-get_location(Location = {_Line, _Column}) ->
+get_location({_Line, _Column} = Location) ->
     Location;
 get_location(_Attrs) ->
     {-1, -1}.

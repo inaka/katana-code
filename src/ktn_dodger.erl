@@ -73,6 +73,8 @@
 
 %% We have snake_case macros here
 -elvis([{elvis_style, macro_names, disable}]).
+-elvis([{elvis_style, no_catch_expressions, disable}]).
+-elvis([{elvis_style, no_throw, disable}]).
 
 -export([parse_file/1, quick_parse_file/1, parse_file/2, quick_parse_file/2, parse/1,
          quick_parse/1, parse/2, quick_parse/2, parse/3, quick_parse/3, parse_form/2, parse_form/3,
@@ -93,6 +95,8 @@
 -type errorinfo() :: {integer(), atom(), term()}.
 
 -type option() :: atom() | {atom(), term()}.
+
+-export_type([errorinfo/0, option/0]).
 
 -hank([{unnecessary_function_arguments, [{no_fix, 1}, {quick_parser, 2}]}]).
 
@@ -714,10 +718,10 @@ scan_form([{'?', L}, {Type, _, _} = N | [{'(', _} | _] = Ts], Opt)
 scan_form(Ts, Opt) ->
     scan_macros(Ts, Opt).
 
-build_info_string(Prefix, Ts0) ->
+build_info_string(PreFix, Ts0) ->
     Ts = lists:droplast(Ts0),
     String = lists:droplast(tokens_to_string(Ts)),
-    Prefix ++ " " ++ String ++ ".".
+    PreFix ++ " " ++ String ++ ".".
 
 scan_macros(Ts, Opt) ->
     scan_macros(Ts, [], Opt).
