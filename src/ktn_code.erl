@@ -543,6 +543,21 @@ to_map({bc_expr, Attrs, Expr}) ->
     #{type => bc_expr,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       content => [to_map(Expr)]};
+%% Map Comprehension
+to_map({mc, Anno, RepE0, RepQs}) ->
+    McExpr = to_map({mc_expr, Anno, RepE0}),
+    McGenerators = to_map(RepQs),
+    #{type => mc,
+      attrs => #{location => get_location(Anno), text => get_text(Anno)},
+      content => [McExpr | McGenerators]};
+to_map({m_generate, Anno, Pattern, RepE0}) ->
+    #{type => m_generate,
+      attrs => #{location => get_location(Anno), text => get_text(Anno)},
+      node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}};
+to_map({mc_expr, Anno, RepE0}) ->
+    #{type => mc_expr,
+      attrs => #{location => get_location(Anno), text => get_text(Anno)},
+      content => [to_map(RepE0)]};
 %% Operation
 to_map({op, Attrs, Operation, Left, Right}) ->
     #{type => op,
