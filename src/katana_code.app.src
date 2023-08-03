@@ -6,5 +6,5 @@
   {modules, []},
   {registered, []},
   {licenses, ["Apache 2.0"]},
-  {links, [{"github", "https://github.com/inaka/katana-code"}]},
+  {links, [{"GitHub", "https://github.com/inaka/katana-code"}]},
   {build_tools, ["rebar3"]}]}.
