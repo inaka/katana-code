@@ -778,7 +778,7 @@ macro_name(Name) ->
 %%      <code>
 %%        split_when(fun (X) -> $. == X end, "a.b.c") = ["a.", "b.", "c"]
 %%      </code>
-%%      NOTE: Copied from ktn_lists not to bring the whole Erlang-katana
+%%      NOTE: Copied from ktn_lists not to bring the whole erlang-katana
 %%            repo as a dependency here
 %% @end
 -spec split_when(fun((T) -> boolean()), [T]) -> [[T]].
