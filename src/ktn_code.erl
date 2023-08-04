@@ -30,7 +30,8 @@
 -type beam_lib_beam() :: file:filename() | binary().
 % Should eventually become beam_lib:beam(), once that's exposed.
 -type erl_syntax_annotation_or_location() :: erl_anno:anno() | erl_anno:location().
-% Should eventually become erl_syntax:annotation_or_location(), once that's exposed.
+% Should eventually become erl_syntax:annotation_or_location(), once that's exposed
+% (https://github.com/erlang/otp/pull/7535)
 -type erl_parse_foo() ::
     {attribute,
      Pos :: erl_syntax_annotation_or_location(),
