@@ -21,7 +21,6 @@
 %%
 %% @copyright 2001-2006 Richard Carlsson
 %% @author Richard Carlsson <carlsson.richard@gmail.com>
-%% @end
 %% =====================================================================
 
 %% @doc `epp_dodger' - bypasses the Erlang preprocessor.
@@ -30,9 +29,9 @@
 %% expanding preprocessor directives and macro applications, as long as
 %% these are syntactically "well-behaved". Because the normal parse
 %% trees of the `erl_parse' module cannot represent these things
-%% (normally, they are expanded by the Erlang preprocessor {@link
-%% //stdlib/epp} before the parser sees them), an extended syntax tree
-%% is created, using the {@link erl_syntax} module.</p>
+%% (normally, they are expanded by the Erlang preprocessor (`epp')
+%% before the parser sees them), an extended syntax tree
+%% is created, using the `erl_syntax' module.</p>
 
 
 %% NOTES:
@@ -74,6 +73,9 @@
 
 %% We have snake_case macros here
 -elvis([{elvis_style, macro_names, disable}]).
+-elvis([{elvis_style, no_catch_expressions, disable}]).
+-elvis([{elvis_style, no_throw, disable}]).
+-elvis([{elvis_style, consistent_variable_casing, disable}]).
 
 -export([parse_file/1, quick_parse_file/1, parse_file/2, quick_parse_file/2, parse/1,
          quick_parse/1, parse/2, quick_parse/2, parse/3, quick_parse/3, parse_form/2, parse_form/3,
@@ -94,6 +96,8 @@
 -type errorinfo() :: {integer(), atom(), term()}.
 
 -type option() :: atom() | {atom(), term()}.
+
+-export_type([errorinfo/0, option/0]).
 
 -hank([{unnecessary_function_arguments, [{no_fix, 1}, {quick_parser, 2}]}]).
 
@@ -117,8 +121,8 @@ parse_file(File) ->
 %% <dl>
 %%   <dt>{@type {no_fail, boolean()@}}</dt>
 %%   <dd>If `true', this makes `epp_dodger' replace any program forms
-%%   that could not be parsed with nodes of type `text' (see {@link
-%%   erl_syntax:text/1}), representing the raw token sequence of the
+%%   that could not be parsed with nodes of type `text' (see
+%%   `erl_syntax:text/1'), representing the raw token sequence of the
 %%   form, instead of reporting a parse error. The default value is
 %%   `false'.</dd>
 %%   <dt>{@type {clever, boolean()@}}</dt>
@@ -145,7 +149,7 @@ parse_file(File, Options) ->
 quick_parse_file(File) ->
     quick_parse_file(File, []).
 
-%% @doc Similar to {@link parse_file/2}, but does a more quick-and-dirty
+%% @doc Similar to `parse_file/2', but does a more quick-and-dirty
 %% processing of the code. Macro definitions and other preprocessor
 %% directives are discarded, and all macro calls are replaced with
 %% atoms. This is useful when only the main structure of the code is of
@@ -153,7 +157,7 @@ quick_parse_file(File) ->
 %% can usually handle more strange cases than the normal, more exact
 %% parsing.
 %%
-%% Options: see {@link parse_file/2}. Note however that for
+%% Options: see `parse_file/2'. Note however that for
 %% `quick_parse_file/2', the option `no_fail' is `true' by default.
 %%
 %% @see quick_parse/2
@@ -221,7 +225,7 @@ parse(Dev, L) ->
 
 %% @doc Reads and parses program text from an I/O stream. Characters are
 %% read from `IODevice' until end-of-file; apart from this, the
-%% behaviour is the same as for {@link parse_file/2}. `StartLine' is the
+%% behaviour is the same as for `parse_file/2'. `StartLine' is the
 %% initial line number, which should be a positive integer.
 %%
 %% @see parse/2
@@ -247,8 +251,8 @@ quick_parse(Dev) ->
 quick_parse(Dev, L) ->
     quick_parse(Dev, L, []).
 
-%% @doc Similar to {@link parse/3}, but does a more quick-and-dirty
-%% processing of the code. See {@link quick_parse_file/2} for details.
+%% @doc Similar to `parse/3', but does a more quick-and-dirty
+%% processing of the code. See `quick_parse_file/2' for details.
 %%
 %% @see quick_parse/2
 %% @see quick_parse_file/2
@@ -317,8 +321,8 @@ parse_form(Dev, L0, Options) ->
 quick_parse_form(Dev, L0) ->
     quick_parse_form(Dev, L0, []).
 
-%% @doc Similar to {@link parse_form/3}, but does a more quick-and-dirty
-%% processing of the code. See {@link quick_parse_file/2} for details.
+%% @doc Similar to `parse_form/3', but does a more quick-and-dirty
+%% processing of the code. See `quick_parse_file/2' for details.
 %%
 %% @see parse/3
 %% @see quick_parse_form/2
@@ -1019,7 +1023,7 @@ maybe_space_between(var, '(') ->
 maybe_space_between(_, _) ->
     " ". % Space between anything else
 
-%% @hidden
+%% @private
 %% @doc Callback function for formatting error descriptors. Not for
 %% normal use.
 

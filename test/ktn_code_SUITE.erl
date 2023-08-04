@@ -14,6 +14,8 @@
 
 -type config() :: [{atom(), term()}].
 
+-export_type([config/0]).
+
 -behaviour(ct_suite).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -97,13 +99,13 @@ parse_tree_otp(_Config) ->
     Paths = filelib:wildcard(OTP ++ "/**/*.erl"),
     ShuffledPaths = shuffle(Paths),
 
-    _ = [begin
-             {ok, Source} = file:read_file(Path),
-             ktn_code:parse_tree(Source)
-         end
-         || Path <- lists:sublist(ShuffledPaths, 1, 100)],
+    _ = [parse_tree_from(Path) || Path <- lists:sublist(ShuffledPaths, 1, 100)],
 
     ok.
+
+parse_tree_from(Path) ->
+    {ok, Source} = file:read_file(Path),
+    ktn_code:parse_tree(Source).
 
 -spec latin1_parse_tree(config()) -> ok.
 latin1_parse_tree(_Config) ->
