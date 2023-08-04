@@ -3,4 +3,5 @@ rebar3.crashdump
 _*
 erl_crash.dump
 _build
+_checkouts
 doc/
