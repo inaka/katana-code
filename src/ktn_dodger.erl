@@ -75,6 +75,7 @@
 -elvis([{elvis_style, macro_names, disable}]).
 -elvis([{elvis_style, no_catch_expressions, disable}]).
 -elvis([{elvis_style, no_throw, disable}]).
+-elvis([{elvis_style, consistent_variable_casing, disable}]).
 
 -export([parse_file/1, quick_parse_file/1, parse_file/2, quick_parse_file/2, parse/1,
          quick_parse/1, parse/2, quick_parse/2, parse/3, quick_parse/3, parse_form/2, parse_form/3,
@@ -718,10 +719,10 @@ scan_form([{'?', L}, {Type, _, _} = N | [{'(', _} | _] = Ts], Opt)
 scan_form(Ts, Opt) ->
     scan_macros(Ts, Opt).
 
-build_info_string(PreFix, Ts0) ->
+build_info_string(Prefix, Ts0) ->
     Ts = lists:droplast(Ts0),
     String = lists:droplast(tokens_to_string(Ts)),
-    PreFix ++ " " ++ String ++ ".".
+    Prefix ++ " " ++ String ++ ".".
 
 scan_macros(Ts, Opt) ->
     scan_macros(Ts, [], Opt).
