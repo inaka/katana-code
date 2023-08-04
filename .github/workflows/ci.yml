@@ -6,24 +6,12 @@ name: Erlang CI
 jobs:
 
   build:
-
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        include:
-          - otp: 23
-            rebar: 3.18
-            os: ubuntu-20.04
-          - otp: 24
-            rebar: 3.22
-            os: ubuntu-22.04
-          - otp: 25
-            rebar: 3.22
-            os: ubuntu-22.04
-          - otp: 26
-            rebar: 3.22
-            os: ubuntu-22.04
+        otp: ['24', '25', '26']
+        rebar: ['3.22']
 
     steps:
       - uses: actions/checkout@v3
@@ -50,6 +38,3 @@ jobs:
         run: rebar3 test
       - name: Run tests and verifications (features enabled)
         run: ERL_FLAGS="-enable-feature all" rebar3 test
-      - name: Build documentation
-        run: rebar3 ex_doc
-        if: ${{matrix.otp != 23}}
