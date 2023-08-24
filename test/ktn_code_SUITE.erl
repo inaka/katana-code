@@ -159,7 +159,7 @@ parse_maybe_else(_Config) ->
 %% Helper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--spec shuffle(any()) -> [any()].
+-spec shuffle([string()]) -> [[any()]].
 shuffle(List) ->
     Items = [{rand:uniform(), X} || X <- List],
     [X || {_, X} <- lists:sort(Items)].
