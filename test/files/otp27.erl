@@ -1,4 +1,3 @@
--format ignore.
 -module(otp27).
 
 -if(?OTP_RELEASE >= 27).
