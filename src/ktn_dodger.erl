@@ -984,6 +984,12 @@ token_to_string(var, A) ->
     atom_to_list(A);
 token_to_string(dot, dot) ->
     ".\n";
+% from OTP: -type af_sigil_prefix() :: {'sigil_prefix', anno(), atom()}.
+token_to_string(sigil_prefix, _Prefix) ->
+    "";
+% from OTP: -type af_sigil_suffix() :: {'sigil_suffix', anno(), string()}.
+token_to_string(sigil_suffix, _Suffix) ->
+    "";
 token_to_string(Same, Same) ->
     atom_to_list(Same).
 
