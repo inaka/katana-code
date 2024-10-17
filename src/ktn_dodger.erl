@@ -357,7 +357,7 @@ parse_form(Dev, L0, Parser, Options) ->
 
     %% This has the *potential* to read options for enabling/disabling
     %% (i.e. `{feature, TheFeature, enable}') when parsing the file.
-    {ok, {_Ftrs, ResWordFun}} = erl_features:keyword_fun(Options, fun erl_scan:f_reserved_word/1),
+    {ok, {_Ftrs, ResWordFun}} = erl_features:keyword_fun(Options, fun reserved_word/1),
 
     ScanOpts = [{reserved_word_fun, ResWordFun} | proplists:get_value(scan_opts, Options, [])],
     case io:scan_erl_form(Dev, "", L0, ScanOpts) of
@@ -511,6 +511,8 @@ quickscan_form([{'-', _Anno}, {atom, AnnoA, 'else'} | _Ts]) ->
 quickscan_form([{'-', _Anno}, {'else', AnnoA} | _Ts]) ->
     kill_form(AnnoA);
 quickscan_form([{'-', _Anno}, {atom, AnnoA, endif} | _Ts]) ->
+    kill_form(AnnoA);
+quickscan_form([{'-', _Anno}, {atom, AnnoA, feature} | _Ts]) ->
     kill_form(AnnoA);
 quickscan_form([{'-', Anno}, {'?', _}, {Type, _, _} = N | [{'(', _} | _] = Ts])
     when Type =:= atom; Type =:= var ->
@@ -1063,3 +1065,10 @@ errormsg(String) ->
 
 
 %% =====================================================================
+%% @doc The dodger currently does not process feature attributes
+%% correctly, so temporarily consider the `else` and `maybe` atoms
+%% always as keywords
+-spec reserved_word(Atom :: atom()) -> boolean().
+reserved_word('else') -> true;
+reserved_word('maybe') -> true;
+reserved_word(Atom) -> erl_scan:f_reserved_word(Atom).
