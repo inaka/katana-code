@@ -1066,7 +1066,7 @@ errormsg(String) ->
 
 %% =====================================================================
 %% @doc The dodger currently does not process feature attributes
-%% correctly, so temporarily consider the `else` and `maybe` atoms
+%% correctly, so temporarily consider the `else' and `maybe' atoms
 %% always as keywords
 -spec reserved_word(Atom :: atom()) -> boolean().
 reserved_word('else') -> true;
