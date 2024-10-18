@@ -400,9 +400,10 @@ parse_form(Parser, Ts, L1, NoFail, Opt) ->
             IoErr = io_error(L1, Term),
             {error, IoErr, L1};
         {parse_error, _IoErr} when NoFail ->
-            {ok, erl_syntax:set_pos(
-                    erl_syntax:text(tokens_to_string(Ts)),
-                    erl_anno:new(start_pos(Ts, L1))),
+            {ok,
+             erl_syntax:set_pos(
+                 erl_syntax:text(tokens_to_string(Ts)),
+                 erl_anno:new(start_pos(Ts, L1))),
              L1};
         {parse_error, IoErr} ->
             {error, IoErr, L1};
