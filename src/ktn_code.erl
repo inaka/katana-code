@@ -18,8 +18,8 @@
 -type tree_node_type() ::
     'case' | 'catch' | 'else' | 'fun' | 'if' | 'maybe' | 'receive' | 'try' | any | atom |
     b_generate | bc | bc_expr | binary | binary_element | block | call | callback |
-    case_clauses | case_expr | char | clause | comment | cons | default | define | export |
-    float | function | generate | import | integer | lc | lc_expr | m_generate | macro | map |
+    case_clauses | case_expr | char | clause | comment | cons | default | define | else_attr | export |
+    float | function | generate | if_attr | import | integer | lc | lc_expr | m_generate | macro | map |
     map_field_assoc | map_field_exact | match | maybe_match | mc | mc_expr | module |
     named_fun | nil | nominal | op | opaque | query | receive_after | receive_case | record |
     record_attr | record_field | record_index | remote | remote_type | root | spec | string |
@@ -130,9 +130,15 @@ revert(attribute, Node0) ->
     Node = erl_syntax:update_tree(Node0, Gs),
 
     Name =
-        try
-            erl_syntax:atom_value(
+        try erl_syntax:atom_value(
                 erl_syntax:attribute_name(Node))
+        of
+            'if' ->
+                if_attr;
+            'else' ->
+                else_attr;
+            Other ->
+                Other
         catch
             _:_ ->
                 erl_syntax:attribute_name(Node)
