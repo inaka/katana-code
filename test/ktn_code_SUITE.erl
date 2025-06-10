@@ -10,6 +10,11 @@
 
 -export([parse_sigils/1]).
 
+-if(?OTP_RELEASE >= 28).
+
+-export([parse_zip/1]).
+
+-endif.
 -endif.
 
 -define(EXCLUDED_FUNS, [module_info, all, test, init_per_suite, end_per_suite]).
@@ -160,6 +165,14 @@ parse_sigils(_Config) ->
         ktn_dodger:parse_file("../../lib/katana_code/test/files/otp27.erl",
                               [no_fail, parse_macro_definitions]).
 
+-if(?OTP_RELEASE >= 28).
+
+parse_zip(_Config) ->
+    {ok, _} =
+        ktn_dodger:parse_file("../../lib/katana_code/test/files/otp28.erl",
+                              [no_fail, parse_macro_definitions]).
+
+-endif.
 -endif.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
