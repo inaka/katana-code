@@ -20,11 +20,11 @@
     b_generate | b_generate_strict | bc | bc_expr | binary | binary_element | block | call |
     callback | case_clauses | case_expr | char | clause | comment | cons | default | define |
     else_attr | export | float | function | generate | generate_strict | if_attr | import |
-    integer | lc | lc_expr | m_generate | macro | map | map_field_assoc | map_field_exact | match |
-    maybe_match | mc | mc_expr | module | named_fun | nil | nominal | op | opaque | query |
-    receive_after | receive_case | record | record_attr | record_field | record_index | remote |
-    remote_type | root | spec | string | try_after | try_case | try_catch | tuple | type |
-    type_attr | type_map_field | typed_record_field | user_type | var | atom().
+    integer | lc | lc_expr | m_generate | m_generate_strict | macro | map | map_field_assoc |
+    map_field_exact | match | maybe_match | mc | mc_expr | module | named_fun | nil | nominal |
+    op | opaque | query | receive_after | receive_case | record | record_attr | record_field |
+    record_index | remote | remote_type | root | spec | string | try_after | try_case | try_catch |
+    tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | atom().
 -type tree_node() ::
     #{type => tree_node_type(),
       attrs => map(),
@@ -580,6 +580,10 @@ to_map({mc, Anno, RepE0, RepQs}) ->
       content => [McExpr | McGenerators]};
 to_map({m_generate, Anno, Pattern, RepE0}) ->
     #{type => m_generate,
+      attrs => #{location => get_location(Anno), text => get_text(Anno)},
+      node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}};
+to_map({m_generate_strict, Anno, Pattern, RepE0}) ->
+    #{type => m_generate_strict,
       attrs => #{location => get_location(Anno), text => get_text(Anno)},
       node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}};
 to_map({mc_expr, Anno, RepE0}) ->
