@@ -24,7 +24,7 @@
     map_field_exact | match | maybe_match | mc | mc_expr | module | named_fun | nil | nominal |
     op | opaque | query | receive_after | receive_case | record | record_attr | record_field |
     record_index | remote | remote_type | root | spec | string | try_after | try_case | try_catch |
-    tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | atom().
+    tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | zip | atom().
 -type tree_node() ::
     #{type => tree_node_type(),
       attrs => map(),
@@ -533,6 +533,13 @@ to_map({Type, Attrs, Key, Value}) when map_field_exact == Type; map_field_assoc 
     #{type => Type,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       node_attrs => #{key => to_map(Key), value => to_map(Value)}};
+%% Comprehensions - all
+to_map({zip, Attrs, Generators}) ->
+    #{type => zip,
+      attrs =>
+          #{location => get_location(Attrs),
+            text => get_text(Attrs),
+            generators => [to_map(Generator) || Generator <- Generators]}};
 %% List Comprehension
 to_map({lc, Attrs, Expr, GeneratorsFilters}) ->
     LcExpr = to_map({lc_expr, Attrs, Expr}),
