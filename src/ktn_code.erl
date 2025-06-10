@@ -17,14 +17,14 @@
 %%       since it has too many options and it's compressed.
 -type tree_node_type() ::
     'case' | 'catch' | 'else' | 'fun' | 'if' | 'maybe' | 'receive' | 'try' | any | atom |
-    b_generate | bc | bc_expr | binary | binary_element | block | call | callback |
-    case_clauses | case_expr | char | clause | comment | cons | default | define | else_attr |
-    export | float | function | generate | if_attr | import | integer | lc | lc_expr |
-    m_generate | macro | map | map_field_assoc | map_field_exact | match | maybe_match | mc |
-    mc_expr | module | named_fun | nil | nominal | op | opaque | query | receive_after |
-    receive_case | record | record_attr | record_field | record_index | remote | remote_type |
-    root | spec | string | try_after | try_case | try_catch | tuple | type | type_attr |
-    type_map_field | typed_record_field | user_type | var | atom().
+    b_generate | b_generate_strict | bc | bc_expr | binary | binary_element | block | call |
+    callback | case_clauses | case_expr | char | clause | comment | cons | default | define |
+    else_attr | export | float | function | generate | generate_strict | if_attr | import |
+    integer | lc | lc_expr | m_generate | macro | map | map_field_assoc | map_field_exact | match |
+    maybe_match | mc | mc_expr | module | named_fun | nil | nominal | op | opaque | query |
+    receive_after | receive_case | record | record_attr | record_field | record_index | remote |
+    remote_type | root | spec | string | try_after | try_case | try_catch | tuple | type |
+    type_attr | type_map_field | typed_record_field | user_type | var | atom().
 -type tree_node() ::
     #{type => tree_node_type(),
       attrs => map(),
@@ -544,6 +544,10 @@ to_map({generate, Attrs, Pattern, Expr}) ->
     #{type => generate,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
+to_map({generate_strict, Attrs, Pattern, Expr}) ->
+    #{type => generate_strict,
+      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+      node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
 to_map({lc_expr, Attrs, Expr}) ->
     #{type => lc_expr,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
@@ -557,6 +561,10 @@ to_map({bc, Attrs, Expr, GeneratorsFilters}) ->
       content => [BcExpr | BcGenerators]};
 to_map({b_generate, Attrs, Pattern, Expr}) ->
     #{type => b_generate,
+      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+      node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
+to_map({b_generate_strict, Attrs, Pattern, Expr}) ->
+    #{type => b_generate_strict,
       attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
       node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
 to_map({bc_expr, Attrs, Expr}) ->
