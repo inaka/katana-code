@@ -4,15 +4,12 @@
 -export([consult/1, beam_to_string/1, parse_tree/1, parse_tree_otp/1, latin1_parse_tree/1,
          to_string/1]).
 
--if(?OTP_RELEASE >= 25).
-
 -export([parse_maybe/1, parse_maybe_else/1]).
 
 -if(?OTP_RELEASE >= 27).
 
 -export([parse_sigils/1]).
 
--endif.
 -endif.
 
 -define(EXCLUDED_FUNS, [module_info, all, test, init_per_suite, end_per_suite]).
@@ -136,8 +133,6 @@ to_string(_Config) ->
 
     ok.
 
--if(?OTP_RELEASE >= 25).
-
 -spec parse_maybe(config()) -> ok.
 parse_maybe(_Config) ->
     %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
@@ -165,7 +160,6 @@ parse_sigils(_Config) ->
         ktn_dodger:parse_file("../../lib/katana_code/test/files/otp27.erl",
                               [no_fail, parse_macro_definitions]).
 
--endif.
 -endif.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
