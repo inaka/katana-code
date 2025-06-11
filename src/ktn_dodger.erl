@@ -490,21 +490,6 @@ expression_dot() ->
     erl_syntax:set_ann(
         erl_syntax:text("."), [expression_dot]).
 
-parse_tokens(Ts, Fix) ->
-    case erl_parse:parse_form(Ts) of
-        {ok, Form} ->
-            Form;
-        {error, IoErr} ->
-        case Fix(Ts) of
-        {form, Form} ->
-            Form;
-        {retry, Ts1, Fix1} ->
-            parse_tokens(Ts1, Fix1);
-        error ->
-            throw({parse_error, IoErr})
-        end
-    end.
-
 %% ---------------------------------------------------------------------
 %% Quick scanning/parsing - deletes macro definitions and other
 %% preprocessor directives, and replaces all macro calls with atoms.
@@ -891,13 +876,11 @@ rewrite(Node) ->
                                     M = erl_syntax:macro(A, rewrite_list(As)),
                                     erl_syntax:copy_pos(Node, M);
                                 _ ->
-                                    do_rewrite(Node)
+                                    rewrite_1(Node)
                             end;
                         _ ->
-                            do_rewrite(Node)
+                            rewrite_1(Node)
                     end;
-                _ ->
-                    do_rewrite(Node);
         tuple ->
             case erl_syntax:tuple_elements(Node) of
                 [MagicWord, A | As] ->
@@ -1009,43 +992,6 @@ no_fix(_) ->
 
 %-doc """
 %Generates a string corresponding to the given token sequence.
-%The string can be re-tokenized to yield the same token list again.
-%""".
-token_to_string(T) ->
-    case erl_scan:text(T) of
-        undefined ->
-            token_to_string(erl_scan:category(T), erl_scan:symbol(T));
-        Text ->
-            Text
-    end.
-
-token_to_string(atom, A) ->
-    io_lib:write_atom(A);
-token_to_string(string, S) ->
-    io_lib:write_string(S);
-token_to_string(char, C) ->
-    io_lib:write_char(C);
-token_to_string(float, F) ->
-    lists:flatten(
-        io_lib:format("~p", [F]));
-token_to_string(integer, N) ->
-    lists:flatten(
-        io_lib:format("~p", [N]));
-token_to_string(var, A) ->
-    atom_to_list(A);
-token_to_string(dot, dot) ->
-    ".\n";
-% from OTP: -type af_sigil_prefix() :: {'sigil_prefix', anno(), atom()}.
-token_to_string(sigil_prefix, _Prefix) ->
-    "";
-% from OTP: -type af_sigil_suffix() :: {'sigil_suffix', anno(), string()}.
-token_to_string(sigil_suffix, _Suffix) ->
-    "";
-token_to_string(Same, Same) ->
-    atom_to_list(Same).
-
-%-doc """
-%Generates a string corresponding to the given token sequence.
 %
 %The string can be re-tokenized to yield the same token list again.
 %""".
@@ -1065,6 +1011,12 @@ tokens_to_string([{var, _, A} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
+% from OTP: -type af_sigil_prefix() :: {'sigil_prefix', anno(), atom()}.
+tokens_to_string([{sigil_prefix, _Prefix} | Ts]) ->
+    "" ++ tokens_to_string(Ts);
+% from OTP: -type af_sigil_suffix() :: {'sigil_suffix', anno(), string()}.
+tokens_to_string([{sigil_suffix, _Suffix} | Ts]) ->
+    "" ++ tokens_to_string(Ts);
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
