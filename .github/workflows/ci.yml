@@ -32,8 +32,9 @@ jobs:
           key: rebar3-cache-for-os-${{runner.os}}-otp-${{steps.setup-beam.outputs.otp-version}}-rebar3-${{steps.setup-beam.outputs.rebar3-version}}-hash-${{hashFiles('rebar.lock')}}
       - name: Compile
         run: ERL_FLAGS="-enable-feature all" rebar3 compile
-      #- name: Format check
-      #  run: ERL_FLAGS="-enable-feature all" rebar3 format --verify
+      - name: Format check
+        if: matrix.otp == '28'
+        run: rebar3 fmt --check
       - name: Run tests and verifications (features not enabled)
         run: rebar3 test
       - name: Run tests and verifications (features enabled)
