@@ -400,32 +400,18 @@ parse_form(Parser, Ts, L1, NoFail, Opt) ->
         {'EXIT', Term} ->
             {error, io_error(L1, {unknown, Term}), L1};
         {error, Term} ->
-    %% This as the *potential* to read options for enabling/disabling
-    %% features for the parsing of the file.
-    {ok, {_Ftrs, ResWordFun}} =
-        erl_features:keyword_fun(Options, fun reserved_word/1),
-
-    case io:scan_erl_form(Dev, "", L0, [{reserved_word_fun,ResWordFun}]) of
-        {ok, Ts, L1} ->
-            case catch {ok, Parser(Ts, Opt)} of
-                {'EXIT', Term} ->
-                    {error, io_error(L1, {unknown, Term}), L1};
-                {error, Term} ->
             IoErr = io_error(L1, Term),
             {error, IoErr, L1};
-                {parse_error, _IoErr} when NoFail ->
-            {ok, erl_syntax:set_pos(
-               erl_syntax:text(tokens_to_string(Ts)),
-               erl_anno:new(start_pos(Ts, L1))),
+        {parse_error, _IoErr} when NoFail ->
+            {ok,
+             erl_syntax:set_pos(
+                 erl_syntax:text(tokens_to_string(Ts)),
+                 erl_anno:new(start_pos(Ts, L1))),
              L1};
-                {parse_error, IoErr} ->
+        {parse_error, IoErr} ->
             {error, IoErr, L1};
-                {ok, F} ->
-                    {ok, F, L1}
-            end;
-        {error, _IoErr, _L1} = Err -> Err;
-        {error, _Reason} -> {eof, L0}; % This is probably encoding problem
-        {eof, _L1} = Eof -> Eof
+        {ok, F} ->
+            {ok, F, L1}
     end.
 
 io_error(L, Desc) ->
@@ -551,12 +537,12 @@ quickscan_form([{'-', Anno}, {'?', _}, {Type, _, _}=N | [{'(', _} | _]=Ts])
   when Type =:= atom; Type =:= var ->
     %% minus, macro and open parenthesis at start of form - assume that
     %% the macro takes no arguments; e.g. `-?foo(...).'
-    do_quickscan_macros(N, Ts, [{'-', Anno}]);
+    quickscan_macros_1(N, Ts, [{'-', Anno}]);
 quickscan_form([{'?', _Anno}, {Type, _, _}=N | [{'(', _} | _]=Ts])
   when Type =:= atom; Type =:= var ->
     %% macro and open parenthesis at start of form - assume that the
     %% macro takes no arguments (see scan_macros for details)
-    do_quickscan_macros(N, Ts, []);
+    quickscan_macros_1(N, Ts, []);
 quickscan_form(Ts) ->
     quickscan_macros(Ts).
 
@@ -584,23 +570,23 @@ quickscan_macros([{'?',_}, {Type, _, _}=N | [{'(',_}|_]=Ts],
           {_, [{':',_} | _] = Ts2} -> Ts2;
           _ -> Ts    %% assume macro without arguments
       end,
-    do_quickscan_macros(N, Ts1, As);
+    quickscan_macros_1(N, Ts1, As);
 quickscan_macros([{'?',_}, {Type, _, _}=N | Ts], As)
   when Type =:= atom; Type =:= var ->
     %% macro with or without arguments
     {_, Ts1} = skip_macro_args(Ts),
-    do_quickscan_macros(N, Ts1, As);
+    quickscan_macros_1(N, Ts1, As);
 quickscan_macros([T | Ts], As) ->
     quickscan_macros(Ts, [T | As]);
 quickscan_macros([], As) ->
     lists:reverse(As).
 
 %% (after a macro has been found and the arglist skipped, if any)
-do_quickscan_macros({_Type, _, A}, [{string, AnnoS, S} | Ts], As) ->
+quickscan_macros_1({_Type, _, A}, [{string, AnnoS, S} | Ts], As) ->
     %% string literal following macro: change to single string
     S1 = quick_macro_string(A) ++ S,
     quickscan_macros(Ts, [{string, AnnoS, S1} | As]);
-do_quickscan_macros({_Type, AnnoA, A}, Ts, As) ->
+quickscan_macros_1({_Type, AnnoA, A}, Ts, As) ->
     %% normal case - just replace the macro with an atom
     quickscan_macros(Ts, [{atom, AnnoA, quick_macro_atom(A)} | As]).
 
@@ -809,11 +795,11 @@ scan_macros([], As, _Opt) ->
 %% (we insert parentheses to preserve the precedences when parsing).
 
 macro(Anno, {Type, _, A}, Rest, As, Opt) ->
-    do_scan_macros([], Rest, [{atom,Anno,macro_atom(Type,A)} | As], Opt).
+    scan_macros_1([], Rest, [{atom,Anno,macro_atom(Type,A)} | As], Opt).
 
 macro_call([{'(',_}, {')',_}], Anno, {_, AnnoN, _}=N, Rest, As, Opt) ->
     {Open, Close} = parentheses(As),
-    do_scan_macros([], Rest,
+    scan_macros_1([], Rest,
                   %% {'?macro_call', N }
                   lists:reverse(Open ++ [{'{', Anno},
                                          {atom, Anno, ?macro_call},
@@ -827,7 +813,7 @@ macro_call([{'(',_} | Args], Anno, {_, AnnoN, _}=N, Rest, As, Opt) ->
     {')', _} = lists:last(Args), %% assert
     Args1 = lists:droplast(Args),
     %% note that we must scan the argument list; it may not be skipped
-    do_scan_macros(Args1 ++ [{'}', AnnoN} | Close],
+    scan_macros_1(Args1 ++ [{'}', AnnoN} | Close],
                   Rest,
                   %% {'?macro_call', N, Arg1, ... }
                   lists:reverse(Open ++ [{'{', Anno},
@@ -851,11 +837,11 @@ parentheses(_) ->
     {[{'(',0}], [{')',0}]}.
 
 %% (after a macro has been found and the arglist skipped, if any)
-do_scan_macros(Args, [{string, AnnoS, _} | _]=Rest, As,
+scan_macros_1(Args, [{string, AnnoS, _} | _]=Rest, As,
           #opt{clever = true}=Opt) ->
     %% string literal following macro: be clever and insert ++
     scan_macros(Args ++ [{'++', AnnoS} | Rest],  As, Opt);
-do_scan_macros(Args, Rest, As, Opt) ->
+scan_macros_1(Args, Rest, As, Opt) ->
     %% normal case - continue scanning
     scan_macros(Args ++ Rest, As, Opt).
 
@@ -919,19 +905,19 @@ rewrite(Node) ->
                                     M = erl_syntax:macro(A, rewrite_list(As)),
                                     erl_syntax:copy_pos(Node, M);
                                 _ ->
-                                    do_rewrite(Node)
+                                    rewrite_1(Node)
                             end;
                         _ ->
-                            do_rewrite(Node)
+                            rewrite_1(Node)
                     end;
                 _ ->
-                    do_rewrite(Node)
+                    rewrite_1(Node)
             end;
     _ ->
-        do_rewrite(Node)
+        rewrite_1(Node)
     end.
 
-do_rewrite(Node) ->
+rewrite_1(Node) ->
     case erl_syntax:subtrees(Node) of
     [] ->
         Node;
@@ -1060,44 +1046,24 @@ token_to_string(Same, Same) ->
 %The string can be re-tokenized to yield the same token list again.
 %""".
 -spec tokens_to_string([term()]) -> string().
-tokens_to_string([T | Ts]) ->
-    token_to_string(T) ++ maybe_space(erl_scan:category(T), Ts) ++ tokens_to_string(Ts);
+tokens_to_string([{atom,_,A} | Ts]) ->
+    io_lib:write_atom(A) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{string, _, S} | Ts]) ->
+    io_lib:write_string(S) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{char, _, C} | Ts]) ->
+    io_lib:write_char(C) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{float, _, F} | Ts]) ->
+    float_to_list(F) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{integer, _, N} | Ts]) ->
+    integer_to_list(N) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{var, _, A} | Ts]) ->
+    atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
+tokens_to_string([{dot, _} | Ts]) ->
+    ".\n" ++ tokens_to_string(Ts);
+tokens_to_string([{A, _} | Ts]) ->
+    atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
     "".
-
-maybe_space(_, []) ->
-    "";
-maybe_space(C, [T | _]) ->
-    maybe_space_between(C, erl_scan:category(T)).
-
-maybe_space_between(dot, _) ->
-    ""; % No space at the end
-maybe_space_between('#', '!') ->
-    ""; %  \
-maybe_space_between('!', '/') ->
-    ""; %   \_ No space for escript headers
-maybe_space_between('/', atom) ->
-    ""; %  /
-maybe_space_between(atom, '/') ->
-    ""; % /
-maybe_space_between('#', _) ->
-    ""; % No space for records and maps
-maybe_space_between(atom, '{') ->
-    ""; % No space for records
-maybe_space_between('?', _) ->
-    ""; % No space for macro names
-maybe_space_between('-', atom) ->
-    ""; % No space for attributes
-maybe_space_between(atom, '(') ->
-    ""; % No space for function calls
-maybe_space_between(var, '(') ->
-    ""; % No space for function calls
-maybe_space_between(_, _) ->
-    " ". % Space between anything else
-
-%% @private
-%% @doc Callback function for formatting error descriptors. Not for
-%% normal use.
 
 %-doc false.
 -spec format_error(term()) -> string().
