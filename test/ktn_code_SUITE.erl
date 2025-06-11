@@ -18,7 +18,7 @@
 
 -if(?OTP_RELEASE >= 28).
 
--export([parse_zip/1]).
+-export([parse_generators/1]).
 
 -endif.
 -endif.
@@ -185,11 +185,11 @@ parse_sigils(_Config) ->
 
 -if(?OTP_RELEASE >= 28).
 
-parse_zip(_Config) ->
+parse_generators(_Config) ->
     {ok, _} =
         ktn_dodger:parse_file(
             "../../lib/katana_code/test/files/otp28.erl",
-            [no_fail, parse_macro_definitions]
+            [no_fail]
         ).
 
 -endif.
