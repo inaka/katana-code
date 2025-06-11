@@ -12,6 +12,7 @@
 
 -export_type([tree_node/0, tree_node_type/0, beam_lib_beam/0]).
 
+%% erlfmt:ignore-begin
 %% NOTE: we use atom() below, because erl_scan:category() is not exported.
 %%       In fact, this type ends up being just atom() for dialyzer,
 %%       since it has too many options and it's compressed.
@@ -25,6 +26,7 @@
     op | opaque | query | receive_after | receive_case | record | record_attr | record_field |
     record_index | remote | remote_type | root | spec | string | try_after | try_case | try_catch |
     tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | zip | atom().
+%% erlfmt:ignore-end
 -type tree_node() ::
     #{type => tree_node_type(),
       attrs => map(),

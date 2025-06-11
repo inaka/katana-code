@@ -4,8 +4,10 @@
 
 -export([valid/0]).
 
+%% erlfmt:ignore-begin
 valid() ->
     % zip generators
-    [A+B || A <- [1,2,3] && B <- [4,5,6]].
+    [A + B || A <- [1, 2, 3] && B <- [4, 5, 6]].
+%% erlfmt:ignore-end
 
 -endif.
