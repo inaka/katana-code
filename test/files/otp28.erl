@@ -2,10 +2,17 @@
 
 -if(?OTP_RELEASE >= 28).
 
+-moduledoc """
+Here we go
+""".
+
 -export([valid/0]).
 
 %% erlfmt:ignore-begin
 
+-doc """
+There and back again.
+""".
 valid() ->
     % list strict generator
     [Integer || {Integer, _} <:- [{1, 2}, {3, 4}]],
