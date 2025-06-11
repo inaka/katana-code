@@ -396,23 +396,22 @@ extract_escript_header(_) ->
     no_header.
 
 parse_form(Parser, Ts, L1, NoFail, Opt) ->
-    case catch {ok, Parser(Ts, Opt)} of
-        {'EXIT', Term} ->
-            {error, io_error(L1, {unknown, Term}), L1};
-        {error, Term} ->
+            case catch {ok, Parser(Ts, Opt)} of
+                {'EXIT', Term} ->
+                    {error, io_error(L1, {unknown, Term}), L1};
+                {error, Term} ->
             IoErr = io_error(L1, Term),
             {error, IoErr, L1};
-        {parse_error, _IoErr} when NoFail ->
-            {ok,
-             erl_syntax:set_pos(
-                 erl_syntax:text(tokens_to_string(Ts)),
-                 erl_anno:new(start_pos(Ts, L1))),
+                {parse_error, _IoErr} when NoFail ->
+            {ok, erl_syntax:set_pos(
+               erl_syntax:text(tokens_to_string(Ts)),
+               erl_anno:new(start_pos(Ts, L1))),
              L1};
-        {parse_error, IoErr} ->
+                {parse_error, IoErr} ->
             {error, IoErr, L1};
-        {ok, F} ->
-            {ok, F, L1}
-    end.
+                {ok, F} ->
+                    {ok, F, L1}
+            end.
 
 io_error(L, Desc) ->
     {L, ?MODULE, Desc}.
@@ -428,9 +427,11 @@ parse_tokens(Ts) ->
     parse_tokens(Ts, fun no_fix/1, fun fix_form/1, fun no_fix/1).
 
 
-%% @doc PreFix adjusts the tokens before parsing them.
-%%      FormFix adjusts the tokens after parsing them, if erl_parse failed.
-%%      PostFix adjusts the forms after parsing them, if erl_parse worked.
+%-doc """
+%PreFix adjusts the tokens before parsing them.
+%FormFix adjusts the tokens after parsing them, if erl_parse failed.
+%PostFix adjusts the forms after parsing them, if erl_parse worked.
+%""".
 parse_tokens(Ts, PreFix, FormFix, PostFix) ->
     case PreFix(Ts) of
         {form, Form} ->
@@ -458,9 +459,11 @@ parse_tokens(Ts, PreFix, FormFix, PostFix) ->
             end
     end.
 
-%% @doc This handles config files, app.src, etc.
-%%      PreFix adjusts the tokens before parsing them.
-%%      FormFix adjusts the tokens after parsing them, only if erl_parse failed.
+%-doc """
+%This handles config files, app.src, etc.
+%PreFix adjusts the tokens before parsing them.
+%FormFix adjusts the tokens after parsing them, only if erl_parse failed.
+%""".
 parse_tokens_as_terms(Ts, PreFix, FormFix) ->
     case PreFix(Ts) of
         {form, Form} ->
@@ -1004,9 +1007,10 @@ fix_contiguous_strings([Other | Rest], Ts) ->
 no_fix(_) ->
     no_fix.
 
-%%
-%% @doc Generates a string corresponding to the given token sequence.
-%% The string can be re-tokenized to yield the same token list again.
+%-doc """
+%Generates a string corresponding to the given token sequence.
+%The string can be re-tokenized to yield the same token list again.
+%""".
 token_to_string(T) ->
     case erl_scan:text(T) of
         undefined ->
@@ -1046,6 +1050,7 @@ token_to_string(Same, Same) ->
 %The string can be re-tokenized to yield the same token list again.
 %""".
 -spec tokens_to_string([term()]) -> string().
+
 tokens_to_string([{atom,_,A} | Ts]) ->
     io_lib:write_atom(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([{string, _, S} | Ts]) ->
@@ -1064,6 +1069,7 @@ tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
 tokens_to_string([]) ->
     "".
+
 
 %-doc false.
 -spec format_error(term()) -> string().
