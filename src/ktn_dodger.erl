@@ -585,7 +585,8 @@ quick_macro_string(A) ->
     "(?" ++ atom_to_list(A) ++ ")".
 
 %% Skipping to the end of a macro call, tracking open/close constructs.
-%% @spec (Tokens) -> {Skipped, Rest}
+
+-spec skip_macro_args(Tokens :: term()) -> {Skipped :: list(), Rest :: term()}.
 
 skip_macro_args([{'(',_}=T | Ts]) ->
     skip_macro_args(Ts, [')'], [T]);
