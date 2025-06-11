@@ -1185,10 +1185,10 @@ tokens_to_string([{var, _, A} | Ts]) ->
 tokens_to_string([{dot, _} | Ts]) ->
     ".\n" ++ tokens_to_string(Ts);
 % from OTP: -type af_sigil_prefix() :: {'sigil_prefix', anno(), atom()}.
-tokens_to_string([{sigil_prefix, _Prefix} | Ts]) ->
+tokens_to_string([{sigil_prefix, _, _Prefix} | Ts]) ->
     "" ++ tokens_to_string(Ts);
 % from OTP: -type af_sigil_suffix() :: {'sigil_suffix', anno(), string()}.
-tokens_to_string([{sigil_suffix, _Suffix} | Ts]) ->
+tokens_to_string([{sigil_suffix, _, _Suffix} | Ts]) ->
     "" ++ tokens_to_string(Ts);
 tokens_to_string([{A, _} | Ts]) ->
     atom_to_list(A) ++ " " ++ tokens_to_string(Ts);
