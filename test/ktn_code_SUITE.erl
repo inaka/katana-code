@@ -1,8 +1,14 @@
 -module(ktn_code_SUITE).
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
--export([consult/1, beam_to_string/1, parse_tree/1, parse_tree_otp/1, latin1_parse_tree/1,
-         to_string/1]).
+-export([
+    consult/1,
+    beam_to_string/1,
+    parse_tree/1,
+    parse_tree_otp/1,
+    latin1_parse_tree/1,
+    to_string/1
+]).
 
 -export([parse_maybe/1, parse_maybe_else/1]).
 
@@ -87,11 +93,15 @@ beam_to_string(_Config) ->
 -spec parse_tree(config()) -> ok.
 parse_tree(_Config) ->
     ModuleNode =
-        #{type => module,
-          attrs =>
-              #{location => {1, 2},
-                text => "module",
-                value => x}},
+        #{
+            type => module,
+            attrs =>
+                #{
+                    location => {1, 2},
+                    text => "module",
+                    value => x
+                }
+        },
 
     #{type := root, content := _} = ktn_code:parse_tree("-module(x)."),
 
@@ -124,9 +134,11 @@ latin1_parse_tree(_Config) ->
                 error
         end,
     #{type := root, content := _} =
-        ktn_code:parse_tree(<<"%% -*- coding: latin-1 -*-\n"
-                              "%% �"
-                              "-module(x).">>),
+        ktn_code:parse_tree(<<
+            "%% -*- coding: latin-1 -*-\n"
+            "%% �"
+            "-module(x)."
+        >>),
 
     ok.
 
@@ -141,9 +153,11 @@ to_string(_Config) ->
 -spec parse_maybe(config()) -> ok.
 parse_maybe(_Config) ->
     %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
-    #{type := root,
-      content :=
-          [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]} =
+    #{
+        type := root,
+        content :=
+            [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]
+    } =
         ktn_code:parse_tree(<<"foo() -> maybe ok ?= ok end.">>),
 
     ok.
@@ -151,9 +165,11 @@ parse_maybe(_Config) ->
 -spec parse_maybe_else(config()) -> ok.
 parse_maybe_else(_Config) ->
     %% Note that to pass this test case, the 'maybe_expr' feature must be enabled.
-    #{type := root,
-      content :=
-          [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]} =
+    #{
+        type := root,
+        content :=
+            [#{type := function, content := [#{type := clause, content := [#{type := 'maybe'}]}]}]
+    } =
         ktn_code:parse_tree(<<"foo() -> maybe ok ?= ok else _ -> ng end.">>),
 
     ok.
@@ -162,15 +178,19 @@ parse_maybe_else(_Config) ->
 
 parse_sigils(_Config) ->
     {ok, _} =
-        ktn_dodger:parse_file("../../lib/katana_code/test/files/otp27.erl",
-                              [no_fail, parse_macro_definitions]).
+        ktn_dodger:parse_file(
+            "../../lib/katana_code/test/files/otp27.erl",
+            [no_fail, parse_macro_definitions]
+        ).
 
 -if(?OTP_RELEASE >= 28).
 
 parse_zip(_Config) ->
     {ok, _} =
-        ktn_dodger:parse_file("../../lib/katana_code/test/files/otp28.erl",
-                              [no_fail, parse_macro_definitions]).
+        ktn_dodger:parse_file(
+            "../../lib/katana_code/test/files/otp28.erl",
+            [no_fail, parse_macro_definitions]
+        ).
 
 -endif.
 -endif.

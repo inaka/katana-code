@@ -1,10 +1,10 @@
-{application,
- katana_code,
- [{description, "Functions useful for processing Erlang code."},
-  {vsn, git},
-  {applications, [kernel, stdlib]},
-  {modules, []},
-  {registered, []},
-  {licenses, ["Apache 2.0"]},
-  {links, [{"GitHub", "https://github.com/inaka/katana-code"}]},
-  {build_tools, ["rebar3"]}]}.
+{application, katana_code, [
+    {description, "Functions useful for processing Erlang code."},
+    {vsn, git},
+    {applications, [kernel, stdlib]},
+    {modules, []},
+    {registered, []},
+    {licenses, ["Apache 2.0"]},
+    {links, [{"GitHub", "https://github.com/inaka/katana-code"}]},
+    {build_tools, ["rebar3"]}
+]}.
