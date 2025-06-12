@@ -24,7 +24,10 @@ valid() ->
     #{K => V + 1 || K := V <:- #{a => 1, b => 2}},
 
     % zip generators
-    [A + B || A <- [1, 2, 3] && B <- [4, 5, 6]].
+    [A + B || A <- [1, 2, 3] && B <- [4, 5, 6]],
+
+    % binaries
+    ~"This is a UTF-8 binary".
 
 %% erlfmt:ignore-end
 
