@@ -25,7 +25,8 @@
     map_field_exact | match | maybe_match | mc | mc_expr | module | named_fun | nil | nominal |
     op | opaque | query | receive_after | receive_case | record | record_attr | record_field |
     record_index | remote | remote_type | root | spec | string | try_after | try_case | try_catch |
-    tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | zip | atom().
+    tuple | type | type_attr | type_map_field | typed_record_field | user_type | var | zip | error |
+    warning | eof | atom().
 %% erlfmt:ignore-end
 -type tree_node() ::
     #{
@@ -1006,6 +1007,28 @@ to_map({macro, Attrs, Name, Args}) ->
                 name => NameStr
             },
         content => to_map(Args1)
+    };
+%% Representation of Parse Errors and End-of-File
+to_map({error, E}) ->
+    #{
+        type => error,
+        attrs => #{
+            value => E
+        }
+    };
+to_map({warning, W}) ->
+    #{
+        type => warning,
+        attrs => #{
+            value => W
+        }
+    };
+to_map({eof, Location}) ->
+    #{
+        type => eof,
+        attrs => #{
+            location => get_location(Location)
+        }
     };
 %% Unhandled forms
 to_map(Parsed) when is_tuple(Parsed) ->
