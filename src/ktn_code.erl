@@ -622,17 +622,6 @@ to_map({Type, Attrs, Key, Value}) when map_field_exact == Type; map_field_assoc 
         attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
         node_attrs => #{key => to_map(Key), value => to_map(Value)}
     };
-%% Comprehensions - all
-to_map({zip, Attrs, Generators}) ->
-    #{
-        type => zip,
-        attrs =>
-            #{
-                location => get_location(Attrs),
-                text => get_text(Attrs),
-                generators => [to_map(Generator) || Generator <- Generators]
-            }
-    };
 %% List Comprehension
 to_map({lc, Attrs, Expr, GeneratorsFilters}) ->
     LcExpr = to_map({lc_expr, Attrs, Expr}),
@@ -647,6 +636,16 @@ to_map({generate, Attrs, Pattern, Expr}) ->
         type => generate,
         attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
         node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}
+    };
+to_map({zip, Attrs, Generators}) ->
+    #{
+        type => zip,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                generators => [to_map(Generator) || Generator <- Generators]
+            }
     };
 to_map({generate_strict, Attrs, Pattern, Expr}) ->
     #{
