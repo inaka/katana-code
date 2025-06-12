@@ -1,3 +1,4 @@
+%% erlfmt:ignore-begin
 %% =====================================================================
 %% %CopyrightBegin%
 %%
@@ -79,7 +80,6 @@
 %syntax tree is created, using the `m:erl_syntax` module.
 %""".
 
--format(ignore).
 -compile(nowarn_deprecated_catch).
 
 %% We have snake_case macros here
@@ -1219,3 +1219,4 @@ errormsg(String) ->
 reserved_word('else') -> true;
 reserved_word('maybe') -> true;
 reserved_word(Atom) -> erl_scan:f_reserved_word(Atom).
+%% erlfmt:ignore-end
