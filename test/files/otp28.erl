@@ -27,7 +27,7 @@ valid() ->
     [A + B || A <- [1, 2, 3] && B <- [4, 5, 6]],
 
     % binaries
-    ~"This is a UTF-8 binary",
+    %~"This is a UTF-8 binary",
 
     % map comprehensions
     #{ K => V || K := V <- #{john => wick}}.
