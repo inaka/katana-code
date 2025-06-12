@@ -609,7 +609,6 @@ filter_form({function, _, ?pp_form, _, [{clause, _, [], [], [{atom, _, kill}]}]}
 filter_form(T) ->
     T.
 
-
 %% ---------------------------------------------------------------------
 %% Normal parsing - try to preserve all information
 
@@ -1083,7 +1082,6 @@ format_error({unknown, Reason}) ->
 
 errormsg(String) ->
     io_lib:format("~s: ~ts", [?MODULE, String]).
-
 
 %% =====================================================================
 
