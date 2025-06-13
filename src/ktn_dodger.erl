@@ -793,7 +793,10 @@ macro_call([{'(', _} | Args], Anno, {_, AnnoN, _} = N, Rest, As, Opt) ->
     %% note that we must scan the argument list; it may not be skipped
     do_scan_macros(Args1 ++ [{'}', AnnoN} | Close],
                   Rest,
-                  lists:reverse(Open ++ [{'{', Anno}, {atom, Anno, ?macro_call}, {',', Anno}, N, {',', AnnoN}], As),
+                  lists:reverse(
+                    Open ++
+                    [{'{', Anno}, {atom, Anno, ?macro_call}, {',', Anno}, N, {',', AnnoN}],
+                    As),
                   Opt).
 
 macro_atom(atom, A) ->
