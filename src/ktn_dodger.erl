@@ -539,6 +539,8 @@ quickscan_macros([{'?', _}, {Type, _, _} = N | [{'(', _} | _] = Ts], [{':', _} |
                   Ts2;
               {_, [{'when', _} | _] = Ts2} ->
                   Ts2;
+              {_, [{':', _} | _] = Ts2} ->
+                  Ts2;
               _ ->
                   Ts    %% assume macro without arguments
           end,
@@ -782,11 +784,11 @@ macro_call([{'(', _}, {')', _}], Anno, {_, AnnoN, _} = N, Rest, As, Opt) ->
                   Rest,
                   lists:reverse(
                     Open ++
-                    [{atom, Anno, ?macro_call}, {'(', Anno}, N, {')', AnnoN}] ++
+                    [{'{', Anno}, {atom, Anno, ?macro_call}, {',', Anno}, N, {'}', AnnoN}] ++
                     Close,
                     As),
                   Opt);
-macro_call([{'(', _} | Args], L, {_, Ln, _} = N, Rest, As, Opt) ->
+macro_call([{'(', _} | Args], Anno, {_, AnnoN, _} = N, Rest, As, Opt) ->
     {Open, Close} = parentheses(As),
     %% drop closing parenthesis
 
@@ -794,9 +796,9 @@ macro_call([{'(', _} | Args], L, {_, Ln, _} = N, Rest, As, Opt) ->
     {')', _} = lists:last(Args),
     Args1 = lists:droplast(Args),
     %% note that we must scan the argument list; it may not be skipped
-    do_scan_macros(Args1 ++ [{'}', Ln} | Close],
+    do_scan_macros(Args1 ++ [{'}', AnnoN} | Close],
                   Rest,
-                  lists:reverse(Open ++ [{atom, L, ?macro_call}, {'(', L}, N, {',', Ln}], As),
+                  lists:reverse(Open ++ [{'{', Anno}, {atom, Anno, ?macro_call}, {',', Anno}, N, {',', AnnoN}], As),
                   Opt).
 
 macro_atom(atom, A) ->
@@ -911,8 +913,8 @@ fix_form([{atom, _, ?pp_form}, {'(', _}, {')', _}, {'->', _}, {atom, _, define},
     case lists:reverse(Ts) of
         [{dot, _}, {')', _} | _] ->
             {retry, Ts, fun fix_stringyfied_macros/1};
-        [{dot, L} | Ts1] ->
-            Ts2 = lists:reverse([{dot, L}, {')', L} | Ts1]),
+        [{dot, Anno} | Ts1] ->
+            Ts2 = lists:reverse([{dot, Anno}, {')', Anno} | Ts1]),
             {retry, Ts2, fun fix_stringyfied_macros/1};
         _ ->
             no_fix
@@ -974,7 +976,7 @@ fix_contiguous_strings([{string, L1, S1} = First, {string, L2, S2} = Second | Re
         {T1, T2} when is_list(T1), is_list(T2) ->
             Separator =
                 case {erl_anno:location(L1), erl_anno:location(L2)} of
-                    {L, L} ->
+                    {Anno, Anno} ->
                         $\s;
                     {_, _} ->
                         $\n % different lines
