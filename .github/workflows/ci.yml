@@ -10,30 +10,31 @@ jobs:
 
     strategy:
       matrix:
-        otp: ['25', '26', '27']
-        rebar: ['3.24']
+        otp: ['26', '27', '28']
+        rebar: ['3.25']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         id: setup-beam
         with:
           otp-version: ${{matrix.otp}}
           rebar3-version: ${{matrix.rebar}}
       - name: Restore _build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: _build
           key: _build-cache-for-os-${{runner.os}}-otp-${{steps.setup-beam.outputs.otp-version}}-rebar3-${{steps.setup-beam.outputs.rebar3-version}}-hash-${{hashFiles('rebar.lock')}}
       - name: Restore rebar3's cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/rebar3
           key: rebar3-cache-for-os-${{runner.os}}-otp-${{steps.setup-beam.outputs.otp-version}}-rebar3-${{steps.setup-beam.outputs.rebar3-version}}-hash-${{hashFiles('rebar.lock')}}
       - name: Compile
         run: ERL_FLAGS="-enable-feature all" rebar3 compile
-      #- name: Format check
-      #  run: ERL_FLAGS="-enable-feature all" rebar3 format --verify
+      - name: Format check
+        if: matrix.otp == '27'
+        run: rebar3 fmt --check
       - name: Run tests and verifications (features not enabled)
         run: rebar3 test
       - name: Run tests and verifications (features enabled)

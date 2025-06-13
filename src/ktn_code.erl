@@ -13,23 +13,14 @@
 -export_type([tree_node/0, tree_node_type/0, beam_lib_beam/0]).
 
 %% NOTE: we use atom() below, because erl_scan:category() is not exported.
-%%       In fact, this type ends up being just atom() for dialyzer,
-%%       since it has too many options and it's compressed.
--type tree_node_type() ::
-    'case' | 'catch' | 'else' | 'fun' | 'if' | 'maybe' | 'receive' | 'try' | any | atom |
-    b_generate | bc | bc_expr | binary | binary_element | block | call | callback |
-    case_clauses | case_expr | char | clause | comment | cons | default | define | else_attr |
-    export | float | function | generate | if_attr | import | integer | lc | lc_expr |
-    m_generate | macro | map | map_field_assoc | map_field_exact | match | maybe_match | mc |
-    mc_expr | module | named_fun | nil | nominal | op | opaque | query | receive_after |
-    receive_case | record | record_attr | record_field | record_index | remote | remote_type |
-    root | spec | string | try_after | try_case | try_catch | tuple | type | type_attr |
-    type_map_field | typed_record_field | user_type | var | atom().
+-type tree_node_type() :: atom().
 -type tree_node() ::
-    #{type => tree_node_type(),
-      attrs => map(),
-      node_attrs => map(),
-      content => [tree_node()]}.
+    #{
+        type => tree_node_type(),
+        attrs => map(),
+        node_attrs => map(),
+        content => [tree_node()]
+    }.
 -type beam_lib_beam() :: file:filename() | binary().
 % Should eventually become beam_lib:beam(), once that's exposed
 % (https://github.com/erlang/otp/pull/7534)
@@ -37,15 +28,11 @@
 % Should eventually become erl_syntax:annotation_or_location(), once that's exposed
 % (https://github.com/erlang/otp/pull/7535)
 -type erl_parse_foo() ::
-    {attribute,
-     Pos :: erl_syntax_annotation_or_location(),
-     Name :: erl_syntax:syntaxTree(),
-     Args :: none | [erl_syntax:syntaxTree()]} |
-    {macro,
-     Pos :: erl_syntax_annotation_or_location(),
-     Name :: erl_syntax:syntaxTree(),
-     Args :: none | [erl_syntax:syntaxTree()]} |
-    {atom, [{node, Node :: erl_syntax:syntaxTree()}], non_reversible_form}.
+    {attribute, Pos :: erl_syntax_annotation_or_location(), Name :: erl_syntax:syntaxTree(),
+        Args :: none | [erl_syntax:syntaxTree()]}
+    | {macro, Pos :: erl_syntax_annotation_or_location(), Name :: erl_syntax:syntaxTree(),
+        Args :: none | [erl_syntax:syntaxTree()]}
+    | {atom, [{node, Node :: erl_syntax:syntaxTree()}], non_reversible_form}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Exported API
@@ -59,7 +46,8 @@ beam_to_string(BeamPath) ->
     case beam_lib:chunks(BeamPath, [abstract_code]) of
         {ok, {_, [{abstract_code, {raw_abstract_v1, Forms}}]}} ->
             Src = erl_prettypr:format(
-                      erl_syntax:form_list(tl(Forms))),
+                erl_syntax:form_list(tl(Forms))
+            ),
             {ok, Src};
         Error ->
             Error
@@ -92,14 +80,18 @@ parse_tree(Source) ->
 
     Comments = lists:filter(fun is_comment/1, Tokens),
     Children =
-        [to_map(Form)
+        [
+            to_map(Form)
          || Form <- Forms,
             %% filter forms that couldn't be parsed
-            element(1, Form) =/= error],
+            element(1, Form) =/= error
+        ],
 
-    #{type => root,
-      attrs => #{tokens => lists:map(fun token_to_map/1, Tokens)},
-      content => to_map(Comments) ++ Children}.
+    #{
+        type => root,
+        attrs => #{tokens => lists:map(fun token_to_map/1, Tokens)},
+        content => to_map(Comments) ++ Children
+    }.
 
 -spec is_comment(erl_scan:token()) -> boolean().
 is_comment({comment, _, _}) ->
@@ -130,8 +122,10 @@ revert(attribute, Node0) ->
     Node = erl_syntax:update_tree(Node0, Gs),
 
     Name =
-        try erl_syntax:atom_value(
-                erl_syntax:attribute_name(Node))
+        try
+            erl_syntax:atom_value(
+                erl_syntax:attribute_name(Node)
+            )
         of
             'if' ->
                 if_attr;
@@ -188,14 +182,14 @@ consult(Source) ->
     Forms = split_when(fun is_dot/1, Tokens),
     ParseFun =
         fun(Form) ->
-           {ok, Expr} = erl_parse:parse_exprs(Form),
-           Expr
+            {ok, Expr} = erl_parse:parse_exprs(Form),
+            Expr
         end,
     Parsed = lists:map(ParseFun, Forms),
     ExprsFun =
         fun(P) ->
-           {value, Value, _} = erl_eval:exprs(P, []),
-           Value
+            {value, Value, _} = erl_eval:exprs(P, []),
+            Value
         end,
     lists:map(ExprsFun, Parsed).
 
@@ -308,397 +302,601 @@ get_text(_Attrs) ->
 to_map(ListParsed) when is_list(ListParsed) ->
     lists:map(fun to_map/1, ListParsed);
 to_map({function, Attrs, Name, Arity, Clauses}) ->
-    #{type => function,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name,
-            arity => Arity},
-      content => to_map(Clauses)};
+    #{
+        type => function,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name,
+                arity => Arity
+            },
+        content => to_map(Clauses)
+    };
 to_map({function, Name, Arity}) ->
     #{type => function, attrs => #{name => Name, arity => Arity}};
 to_map({function, Module, Name, Arity}) ->
-    #{type => function,
-      attrs =>
-          #{module => Module,
-            name => Name,
-            arity => Arity}};
+    #{
+        type => function,
+        attrs =>
+            #{
+                module => Module,
+                name => Name,
+                arity => Arity
+            }
+    };
 to_map({clause, Attrs, Patterns, Guards, Body}) ->
-    #{type => clause,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{pattern => to_map(Patterns), guards => to_map(Guards)},
-      content => to_map(Body)};
+    #{
+        type => clause,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{pattern => to_map(Patterns), guards => to_map(Guards)},
+        content => to_map(Body)
+    };
 to_map({match, Attrs, Left, Right}) ->
-    #{type => match,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map([Left, Right])};
+    #{
+        type => match,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map([Left, Right])
+    };
 to_map({maybe_match, Attrs, Left, Right}) ->
-    #{type => maybe_match,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map([Left, Right])};
+    #{
+        type => maybe_match,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map([Left, Right])
+    };
 to_map({tuple, Attrs, Elements}) ->
-    #{type => tuple,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Elements)};
+    #{
+        type => tuple,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Elements)
+    };
 %% Literals
-to_map({Type, Attrs, Value})
-    when Type == atom; Type == integer; Type == float; Type == string; Type == char ->
-    #{type => Type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            value => Value}};
+to_map({Type, Attrs, Value}) when
+    Type == atom; Type == integer; Type == float; Type == string; Type == char
+->
+    #{
+        type => Type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                value => Value
+            }
+    };
 to_map({bin, Attrs, Elements}) ->
-    #{type => binary,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Elements)};
+    #{
+        type => binary,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Elements)
+    };
 to_map({bin_element, Attrs, Value, Size, TSL}) ->
-    #{type => binary_element,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            type_spec_list => TSL},
-      node_attrs =>
-          #{value => to_map(Value),
-            size =>
-                case Size of
-                    default ->
-                        #{type => default};
-                    _ ->
-                        to_map(Size)
-                end}};
+    #{
+        type => binary_element,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                type_spec_list => TSL
+            },
+        node_attrs =>
+            #{
+                value => to_map(Value),
+                size =>
+                    case Size of
+                        default ->
+                            #{type => default};
+                        _ ->
+                            to_map(Size)
+                    end
+            }
+    };
 %% Variables
 to_map({var, Attrs, Name}) ->
-    #{type => var,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name}};
+    #{
+        type => var,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            }
+    };
 %% Function call
 to_map({call, Attrs, Function, Arguments}) ->
-    #{type => call,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{function => to_map(Function)},
-      content => to_map(Arguments)};
+    #{
+        type => call,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{function => to_map(Function)},
+        content => to_map(Arguments)
+    };
 to_map({remote, Attrs, Module, Function}) ->
-    #{type => remote,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{module => to_map(Module), function => to_map(Function)}};
+    #{
+        type => remote,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{module => to_map(Module), function => to_map(Function)}
+    };
 %% case
 to_map({'case', Attrs, Expr, Clauses}) ->
     CaseExpr = to_map({case_expr, Attrs, Expr}),
     CaseClauses = to_map({case_clauses, Attrs, Clauses}),
-    #{type => 'case',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{expression => to_map(Expr)},
-      content => [CaseExpr, CaseClauses]};
+    #{
+        type => 'case',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{expression => to_map(Expr)},
+        content => [CaseExpr, CaseClauses]
+    };
 to_map({case_expr, Attrs, Expr}) ->
-    #{type => case_expr,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [to_map(Expr)]};
+    #{
+        type => case_expr,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [to_map(Expr)]
+    };
 to_map({case_clauses, Attrs, Clauses}) ->
-    #{type => case_clauses,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Clauses)};
+    #{
+        type => case_clauses,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Clauses)
+    };
 %% fun
 to_map({'fun', Attrs, {function, Name, Arity}}) ->
-    #{type => 'fun',
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name,
-            arity => Arity}};
+    #{
+        type => 'fun',
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name,
+                arity => Arity
+            }
+    };
 to_map({'fun', Attrs, {function, Module, Name, Arity}}) ->
-    #{type => 'fun',
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            module => Module,
-            name => Name,
-            arity => Arity}};
+    #{
+        type => 'fun',
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                module => Module,
+                name => Name,
+                arity => Arity
+            }
+    };
 to_map({'fun', Attrs, {clauses, Clauses}}) ->
-    #{type => 'fun',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Clauses)};
+    #{
+        type => 'fun',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Clauses)
+    };
 to_map({named_fun, Attrs, Name, Clauses}) ->
-    #{type => named_fun,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => to_map(Clauses)};
+    #{
+        type => named_fun,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Clauses)
+    };
 %% query - deprecated, implemented for completion.
 to_map({query, Attrs, ListCompr}) ->
-    #{type => query,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(ListCompr)};
+    #{
+        type => query,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(ListCompr)
+    };
 %% try..catch..after
 to_map({'try', Attrs, Body, [], CatchClauses, AfterBody}) ->
     TryBody = to_map(Body),
     TryCatch = to_map({try_catch, Attrs, CatchClauses}),
     TryAfter = to_map({try_after, Attrs, AfterBody}),
 
-    #{type => 'try',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{catch_clauses => to_map(CatchClauses), after_body => to_map(AfterBody)},
-      content => TryBody ++ [TryCatch, TryAfter]};
+    #{
+        type => 'try',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{catch_clauses => to_map(CatchClauses), after_body => to_map(AfterBody)},
+        content => TryBody ++ [TryCatch, TryAfter]
+    };
 %% try..of..catch..after
 to_map({'try', Attrs, Expr, CaseClauses, CatchClauses, AfterBody}) ->
     TryCase = to_map({try_case, Attrs, Expr, CaseClauses}),
     TryCatch = to_map({try_catch, Attrs, CatchClauses}),
     TryAfter = to_map({try_after, Attrs, AfterBody}),
 
-    #{type => 'try',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [TryCase, TryCatch, TryAfter]};
+    #{
+        type => 'try',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [TryCase, TryCatch, TryAfter]
+    };
 to_map({try_case, Attrs, Expr, Clauses}) ->
-    #{type => try_case,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{expression => to_map(Expr)},
-      content => to_map(Clauses)};
+    #{
+        type => try_case,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{expression => to_map(Expr)},
+        content => to_map(Clauses)
+    };
 to_map({try_catch, Attrs, Clauses}) ->
-    #{type => try_catch,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Clauses)};
+    #{
+        type => try_catch,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Clauses)
+    };
 to_map({try_after, Attrs, AfterBody}) ->
-    #{type => try_after,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(AfterBody)};
+    #{
+        type => try_after,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(AfterBody)
+    };
 %% maybe..end
 to_map({'maybe', Attrs, Body}) ->
     MaybeBody = to_map(Body),
-    #{type => 'maybe',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => MaybeBody};
+    #{
+        type => 'maybe',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => MaybeBody
+    };
 %% maybe..else..end
 to_map({'maybe', Attrs, Body, Else}) ->
     MaybeBody = to_map(Body),
     MaybeElse = to_map(Else),
-    #{type => 'maybe',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => MaybeBody ++ [MaybeElse]};
+    #{
+        type => 'maybe',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => MaybeBody ++ [MaybeElse]
+    };
 to_map({'else', Attrs, Clauses}) ->
-    #{type => 'else',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Clauses)};
+    #{
+        type => 'else',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Clauses)
+    };
 %% if
 to_map({'if', Attrs, IfClauses}) ->
-    #{type => 'if',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(IfClauses)};
+    #{
+        type => 'if',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(IfClauses)
+    };
 %% catch
 to_map({'catch', Attrs, Expr}) ->
-    #{type => 'catch',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [to_map(Expr)]};
+    #{
+        type => 'catch',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [to_map(Expr)]
+    };
 %% receive
 to_map({'receive', Attrs, Clauses}) ->
     RecClauses = to_map({receive_case, Attrs, Clauses}),
-    #{type => 'receive',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [RecClauses]};
+    #{
+        type => 'receive',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [RecClauses]
+    };
 to_map({'receive', Attrs, Clauses, AfterExpr, AfterBody}) ->
     RecClauses = to_map({receive_case, Attrs, Clauses}),
     RecAfter = to_map({receive_after, Attrs, AfterExpr, AfterBody}),
-    #{type => 'receive',
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [RecClauses, RecAfter]};
+    #{
+        type => 'receive',
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [RecClauses, RecAfter]
+    };
 to_map({receive_case, Attrs, Clauses}) ->
-    #{type => receive_case,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Clauses)};
+    #{
+        type => receive_case,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Clauses)
+    };
 to_map({receive_after, Attrs, Expr, Body}) ->
-    #{type => receive_after,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{expression => to_map(Expr)},
-      content => to_map(Body)};
+    #{
+        type => receive_after,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{expression => to_map(Expr)},
+        content => to_map(Body)
+    };
 %% List
 to_map({nil, Attrs}) ->
     #{type => nil, attrs => #{location => get_location(Attrs), text => get_text(Attrs)}};
 to_map({cons, Attrs, Head, Tail}) ->
-    #{type => cons,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [to_map(Head), to_map(Tail)]};
+    #{
+        type => cons,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [to_map(Head), to_map(Tail)]
+    };
 %% Map
 to_map({map, Attrs, Pairs}) ->
-    #{type => map,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Pairs)};
+    #{
+        type => map,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Pairs)
+    };
 to_map({map, Attrs, Var, Pairs}) ->
-    #{type => map,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{var => to_map(Var)},
-      content => to_map(Pairs)};
+    #{
+        type => map,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{var => to_map(Var)},
+        content => to_map(Pairs)
+    };
 to_map({Type, Attrs, Key, Value}) when map_field_exact == Type; map_field_assoc == Type ->
-    #{type => Type,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{key => to_map(Key), value => to_map(Value)}};
+    #{
+        type => Type,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{key => to_map(Key), value => to_map(Value)}
+    };
 %% List Comprehension
 to_map({lc, Attrs, Expr, GeneratorsFilters}) ->
     LcExpr = to_map({lc_expr, Attrs, Expr}),
     LcGenerators = to_map(GeneratorsFilters),
-    #{type => lc,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [LcExpr | LcGenerators]};
+    #{
+        type => lc,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [LcExpr | LcGenerators]
+    };
 to_map({generate, Attrs, Pattern, Expr}) ->
-    #{type => generate,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
+    #{
+        type => generate,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}
+    };
+to_map({zip, Attrs, Generators}) ->
+    #{
+        type => zip,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                generators => [to_map(Generator) || Generator <- Generators]
+            }
+    };
+to_map({generate_strict, Attrs, Pattern, Expr}) ->
+    #{
+        type => generate_strict,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}
+    };
 to_map({lc_expr, Attrs, Expr}) ->
-    #{type => lc_expr,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [to_map(Expr)]};
+    #{
+        type => lc_expr,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [to_map(Expr)]
+    };
 %% Binary Comprehension
 to_map({bc, Attrs, Expr, GeneratorsFilters}) ->
     BcExpr = to_map({bc_expr, Attrs, Expr}),
     BcGenerators = to_map(GeneratorsFilters),
-    #{type => bc,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [BcExpr | BcGenerators]};
+    #{
+        type => bc,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [BcExpr | BcGenerators]
+    };
 to_map({b_generate, Attrs, Pattern, Expr}) ->
-    #{type => b_generate,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}};
+    #{
+        type => b_generate,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}
+    };
+to_map({b_generate_strict, Attrs, Pattern, Expr}) ->
+    #{
+        type => b_generate_strict,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(Expr)}
+    };
 to_map({bc_expr, Attrs, Expr}) ->
-    #{type => bc_expr,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => [to_map(Expr)]};
+    #{
+        type => bc_expr,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => [to_map(Expr)]
+    };
 %% Map Comprehension
 to_map({mc, Anno, RepE0, RepQs}) ->
     McExpr = to_map({mc_expr, Anno, RepE0}),
     McGenerators = to_map(RepQs),
-    #{type => mc,
-      attrs => #{location => get_location(Anno), text => get_text(Anno)},
-      content => [McExpr | McGenerators]};
+    #{
+        type => mc,
+        attrs => #{location => get_location(Anno), text => get_text(Anno)},
+        content => [McExpr | McGenerators]
+    };
 to_map({m_generate, Anno, Pattern, RepE0}) ->
-    #{type => m_generate,
-      attrs => #{location => get_location(Anno), text => get_text(Anno)},
-      node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}};
+    #{
+        type => m_generate,
+        attrs => #{location => get_location(Anno), text => get_text(Anno)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}
+    };
+to_map({m_generate_strict, Anno, Pattern, RepE0}) ->
+    #{
+        type => m_generate_strict,
+        attrs => #{location => get_location(Anno), text => get_text(Anno)},
+        node_attrs => #{pattern => to_map(Pattern), expression => to_map(RepE0)}
+    };
 to_map({mc_expr, Anno, RepE0}) ->
-    #{type => mc_expr,
-      attrs => #{location => get_location(Anno), text => get_text(Anno)},
-      content => [to_map(RepE0)]};
+    #{
+        type => mc_expr,
+        attrs => #{location => get_location(Anno), text => get_text(Anno)},
+        content => [to_map(RepE0)]
+    };
 %% Operation
 to_map({op, Attrs, Operation, Left, Right}) ->
-    #{type => op,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            operation => Operation},
-      content => to_map([Left, Right])};
+    #{
+        type => op,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                operation => Operation
+            },
+        content => to_map([Left, Right])
+    };
 to_map({op, Attrs, Operation, Single}) ->
-    #{type => op,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            operation => Operation},
-      content => to_map([Single])};
+    #{
+        type => op,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                operation => Operation
+            },
+        content => to_map([Single])
+    };
 %% Record
 to_map({record, Attrs, Name, Fields}) ->
-    #{type => record,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => to_map(Fields)};
+    #{
+        type => record,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Fields)
+    };
 to_map({record, Attrs, Var, Name, Fields}) ->
-    #{type => record,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      node_attrs => #{variable => to_map(Var)},
-      content => to_map(Fields)};
+    #{
+        type => record,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        node_attrs => #{variable => to_map(Var)},
+        content => to_map(Fields)
+    };
 to_map({record_index, Attrs, Name, Field}) ->
-    #{type => record_index,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => [to_map(Field)]};
+    #{
+        type => record_index,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => [to_map(Field)]
+    };
 to_map({record_field, Attrs, Name}) ->
-    #{type => record_field,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{name => to_map(Name)}};
+    #{
+        type => record_field,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{name => to_map(Name)}
+    };
 to_map({record_field, Attrs, Name, Default}) ->
-    #{type => record_field,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{default => to_map(Default), name => to_map(Name)}};
+    #{
+        type => record_field,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{default => to_map(Default), name => to_map(Name)}
+    };
 to_map({record_field, Attrs, Var, Name, Field}) ->
-    #{type => record_field,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      node_attrs => #{variable => to_map(Var)},
-      content => [to_map(Field)]};
+    #{
+        type => record_field,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        node_attrs => #{variable => to_map(Var)},
+        content => [to_map(Field)]
+    };
 %% Block
 to_map({block, Attrs, Body}) ->
-    #{type => block,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      content => to_map(Body)};
+    #{
+        type => block,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        content => to_map(Body)
+    };
 %% Record Attribute
 to_map({attribute, Attrs, record, {Name, Fields}}) ->
-    #{type => record_attr,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => to_map(Fields)};
+    #{
+        type => record_attr,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Fields)
+    };
 to_map({typed_record_field, Field, Type}) ->
     FieldMap = to_map(Field),
-    #{type => typed_record_field,
-      attrs =>
-          #{location => attr(location, FieldMap),
-            text => attr(text, FieldMap),
-            field => FieldMap},
-      node_attrs => #{type => to_map(Type)}};
+    #{
+        type => typed_record_field,
+        attrs =>
+            #{
+                location => attr(location, FieldMap),
+                text => attr(text, FieldMap),
+                field => FieldMap
+            },
+        node_attrs => #{type => to_map(Type)}
+    };
 %% Type
 to_map({type, Attrs, 'fun', Types}) ->
-    #{type => type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => 'fun'},
-      content => to_map(Types)};
+    #{
+        type => type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => 'fun'
+            },
+        content => to_map(Types)
+    };
 to_map({type, Attrs, constraint, [Sub, SubType]}) ->
-    #{type => type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => constraint,
-            subtype => Sub},
-      content => to_map(SubType)};
+    #{
+        type => type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => constraint,
+                subtype => Sub
+            },
+        content => to_map(SubType)
+    };
 to_map({type, Attrs, bounded_fun, [FunType, Defs]}) ->
-    #{type => type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => bounded_fun},
-      node_attrs => #{'fun' => to_map(FunType)},
-      content => to_map(Defs)};
+    #{
+        type => type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => bounded_fun
+            },
+        node_attrs => #{'fun' => to_map(FunType)},
+        content => to_map(Defs)
+    };
 to_map({type, Attrs, Name, any}) ->
     to_map({type, Attrs, Name, [any]});
 to_map({type, Attrs, any}) ->
-    #{type => type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => "...",
-            name => '...'}};
+    #{
+        type => type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => "...",
+                name => '...'
+            }
+    };
 to_map({type, Attrs, Name, Types}) ->
-    #{type => type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => to_map(Types)};
-to_map({user_type, Attrs, Name, Types}) -> %% any()
-    #{type => user_type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      content => to_map(Types)};
+    #{
+        type => type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Types)
+    };
+%% any()
+to_map({user_type, Attrs, Name, Types}) ->
+    #{
+        type => user_type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Types)
+    };
 to_map({type, Attrs, map_field_assoc, Name, Type}) ->
     {Location, Text} =
         case Attrs of
@@ -707,48 +905,71 @@ to_map({type, Attrs, map_field_assoc, Name, Type}) ->
             Attrs ->
                 {get_location(Attrs), get_text(Attrs)}
         end,
-    #{type => type_map_field,
-      attrs => #{location => Location, text => Text},
-      node_attrs => #{key => to_map(Name), type => to_map(Type)}};
+    #{
+        type => type_map_field,
+        attrs => #{location => Location, text => Text},
+        node_attrs => #{key => to_map(Name), type => to_map(Type)}
+    };
 to_map({remote_type, Attrs, [Module, Function, Args]}) ->
-    #{type => remote_type,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs =>
-          #{module => to_map(Module),
-            function => to_map(Function),
-            args => to_map(Args)}};
+    #{
+        type => remote_type,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs =>
+            #{
+                module => to_map(Module),
+                function => to_map(Function),
+                args => to_map(Args)
+            }
+    };
 to_map({ann_type, Attrs, [Var, Type]}) ->
-    #{type => record_field,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{var => to_map(Var), type => to_map(Type)}};
+    #{
+        type => record_field,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{var => to_map(Var), type => to_map(Type)}
+    };
 to_map({paren_type, Attrs, [Type]}) ->
-    #{type => record_field,
-      attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
-      node_attrs => #{type => to_map(Type)}};
-to_map(any) -> %% any()
+    #{
+        type => record_field,
+        attrs => #{location => get_location(Attrs), text => get_text(Attrs)},
+        node_attrs => #{type => to_map(Type)}
+    };
+%% any()
+to_map(any) ->
     #{type => any};
 %% Other Attributes
 to_map({attribute, Attrs, type, {Name, Type, Args}}) ->
-    #{type => type_attr,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name},
-      node_attrs => #{args => to_map(Args), type => to_map(Type)}};
+    #{
+        type => type_attr,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        node_attrs => #{args => to_map(Args), type => to_map(Type)}
+    };
 to_map({attribute, Attrs, spec, {{Name, Arity}, Types}}) ->
-    #{type => spec,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            name => Name,
-            arity => Arity},
-      node_attrs => #{types => to_map(Types)}};
+    #{
+        type => spec,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name,
+                arity => Arity
+            },
+        node_attrs => #{types => to_map(Types)}
+    };
 to_map({attribute, Attrs, Type, Value}) ->
-    #{type => Type,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs),
-            value => Value}};
+    #{
+        type => Type,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                value => Value
+            }
+    };
 %% Comments
 to_map({comment, Attrs, _Text}) ->
     #{type => comment, attrs => #{location => get_location(Attrs), text => get_text(Attrs)}};
@@ -762,12 +983,38 @@ to_map({macro, Attrs, Name, Args}) ->
                 Args
         end,
     NameStr = macro_name(Name),
-    #{type => macro,
-      attrs =>
-          #{location => get_location(Attrs),
-            text => get_text(Attrs) ++ NameStr,
-            name => NameStr},
-      content => to_map(Args1)};
+    #{
+        type => macro,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs) ++ NameStr,
+                name => NameStr
+            },
+        content => to_map(Args1)
+    };
+%% Representation of Parse Errors and End-of-File
+to_map({error, E}) ->
+    #{
+        type => error,
+        attrs => #{
+            value => E
+        }
+    };
+to_map({warning, W}) ->
+    #{
+        type => warning,
+        attrs => #{
+            value => W
+        }
+    };
+to_map({eof, Location}) ->
+    #{
+        type => eof,
+        attrs => #{
+            location => get_location(Location)
+        }
+    };
 %% Unhandled forms
 to_map(Parsed) when is_tuple(Parsed) ->
     case erl_syntax:is_tree(Parsed) of

@@ -114,7 +114,7 @@ get_until(Module, Function, XArgs, Str) ->
     apply_get_until(Module, Function, [], Str, XArgs).
 
 -spec apply_get_until(module(), atom(), any(), string() | eof, list()) ->
-                         {term(), string()}.
+    {term(), string()}.
 apply_get_until(Module, Function, State, String, XArgs) ->
     case apply(Module, Function, [State, String | XArgs]) of
         {done, Result, NewStr} ->
@@ -124,12 +124,12 @@ apply_get_until(Module, Function, State, String, XArgs) ->
     end.
 
 -spec skip(string() | {cont, integer(), string()}, term(), integer()) ->
-              {more, {cont, integer(), string()}} | {done, integer(), string()}.
+    {more, {cont, integer(), string()}} | {done, integer(), string()}.
 skip(Str, _Data, Length) ->
     skip(Str, Length).
 
 -spec skip(string() | {cont, integer(), string()}, integer()) ->
-              {more, {cont, integer(), string()}} | {done, integer(), string()}.
+    {more, {cont, integer(), string()}} | {done, integer(), string()}.
 skip(Str, Length) when is_list(Str) ->
     {more, {cont, Length, Str}};
 skip({cont, 0, Str}, Length) ->
