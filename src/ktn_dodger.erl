@@ -663,13 +663,8 @@ default_prefix(#opt{parse_macro_definitions = false, compact_strings = true}) ->
     end.
 
 scan_form([{'-', _Anno}, {atom, AnnoA, define} | Ts], #opt{parse_macro_definitions = false}) ->
-    [
-        {atom, AnnoA, ?pp_form},
-        {'(', AnnoA},
-        {')', AnnoA},
-        {'->', AnnoA},
-        {atom, AnnoA, define}
-    | Ts];
+    [{atom, AnnoA, ?pp_form}, {'(', AnnoA}, {')', AnnoA}, {'->', AnnoA}, {atom, AnnoA, define}
+     | Ts];
 scan_form([{'-', _Anno}, {atom, AnnoA, define} | Ts], Opt) ->
     [{atom, AnnoA, ?pp_form}, {'(', AnnoA}, {')', AnnoA}, {'->', AnnoA}, {atom, AnnoA, define}
      | scan_macros(Ts, Opt)];
