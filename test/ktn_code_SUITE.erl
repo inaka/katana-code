@@ -2,6 +2,7 @@
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
+    guards/1,
     consult/1,
     beam_to_string/1,
     parse_tree/1,
@@ -47,7 +48,7 @@ all() ->
                 [parse_maybe, parse_maybe_else]
         end,
     Excluded = ?EXCLUDED_FUNS ++ DisabledMaybeTests,
-    [F || {F, _} <- Exports, not lists:member(F, Excluded)].
+    [F || {F, 1} <- Exports, not lists:member(F, Excluded)].
 
 -spec init_per_suite(config()) -> config().
 init_per_suite(Config) ->
@@ -68,6 +69,133 @@ enabled_features() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Test Cases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-spec guards(config()) -> ok.
+guards(_Config) ->
+    %% One guard
+    [[#{type := atom, attrs := #{value := single_guard}}]] =
+        extract_guards(<<"f() -> case x of x when single_guard -> x end.">>),
+    %% Join with , - and - andalso
+    [
+        [
+            #{type := atom, attrs := #{value := first_guard}},
+            #{type := atom, attrs := #{value := second_guard}}
+        ]
+    ] = extract_guards(<<"f() -> case x of x when first_guard, second_guard -> x end.">>),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{type := atom, attrs := #{value := second_guard}}
+                ],
+                attrs := #{operation := 'andalso'}
+            }
+        ]
+    ] =
+        extract_guards(<<"f() -> case x of x when first_guard andalso second_guard -> x end.">>),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{type := atom, attrs := #{value := second_guard}}
+                ],
+                attrs := #{operation := 'and'}
+            }
+        ]
+    ] = extract_guards(<<"f() -> case x of x when first_guard and second_guard -> x end.">>),
+    %% Join with ; - or - orelse
+    [
+        [#{type := atom, attrs := #{value := first_guard}}],
+        [#{type := atom, attrs := #{value := second_guard}}]
+    ] = extract_guards(<<"f() -> case x of x when first_guard; second_guard -> x end.">>),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{type := atom, attrs := #{value := second_guard}}
+                ],
+                attrs := #{operation := 'orelse'}
+            }
+        ]
+    ] =
+        extract_guards(<<"f() -> case x of x when first_guard orelse second_guard -> x end.">>),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{type := atom, attrs := #{value := second_guard}}
+                ],
+                attrs := #{operation := 'or'}
+            }
+        ]
+    ] = extract_guards(<<"f() -> case x of x when first_guard or second_guard -> x end.">>),
+    %% Combine ...
+    [
+        [#{type := atom, attrs := #{value := first_guard}}],
+        [
+            #{type := atom, attrs := #{value := second_guard}},
+            #{type := atom, attrs := #{value := third_guard}}
+        ]
+    ] = extract_guards(
+        <<"f() -> case x of x when first_guard; second_guard, third_guard -> x end.">>
+    ),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{
+                        type := op,
+                        content := [
+                            #{type := atom, attrs := #{value := second_guard}},
+                            #{type := atom, attrs := #{value := third_guard}}
+                        ],
+                        attrs := #{operation := 'andalso'}
+                    }
+                ],
+                attrs := #{operation := 'orelse'}
+            }
+        ]
+    ] =
+        extract_guards(
+            <<
+                "f() ->\n"
+                "case x of x when first_guard orelse second_guard andalso third_guard -> x end.\n"
+                ""
+            >>
+        ),
+    [
+        [
+            #{
+                type := op,
+                content := [
+                    #{type := atom, attrs := #{value := first_guard}},
+                    #{
+                        type := op,
+                        content := [
+                            #{type := atom, attrs := #{value := second_guard}},
+                            #{type := atom, attrs := #{value := third_guard}}
+                        ],
+                        attrs := #{operation := 'and'}
+                    }
+                ],
+                attrs := #{operation := 'or'}
+            }
+        ]
+    ] =
+        extract_guards(
+            <<"f() -> case x of x when first_guard or second_guard and third_guard -> x end.">>
+        ),
+    ok.
 
 -spec consult(config()) -> ok.
 consult(_Config) ->
@@ -203,3 +331,19 @@ parse_generators(_Config) ->
 shuffle(List) ->
     Items = [{rand:uniform(), X} || X <- List],
     [X || {_, X} <- lists:sort(Items)].
+
+extract_guards(Source) ->
+    extract_guards([ktn_code:parse_tree(Source)], []).
+
+extract_guards([], Guards) ->
+    Guards;
+extract_guards([Node | Nodes], Guards) ->
+    extract_guards(
+        ktn_code:content(Node) ++
+            lists:flatten([maps:values(maps:get(node_attrs, Node, #{}))]) ++
+            Nodes,
+        case ktn_code:node_attr(guards, Node) of
+            undefined -> Guards;
+            Gs -> Guards ++ Gs
+        end
+    ).
