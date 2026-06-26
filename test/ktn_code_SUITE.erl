@@ -22,6 +22,11 @@
 
 -export([parse_generators/1, parse_macro_in_nominal/1]).
 
+-if(?OTP_RELEASE >= 29).
+
+-export([parse_native_record/1]).
+
+-endif.
 -endif.
 -endif.
 
@@ -332,6 +337,16 @@ parse_macro_in_nominal(_Config) ->
         type_def_node(<<"-nominal nested() :: {?A, [?B], #{?C => ?D}}.">>),
     ok.
 
+-if(?OTP_RELEASE >= 29).
+
+parse_native_record(_Config) ->
+    {ok, _} =
+        ktn_dodger:parse_file(
+            "../../lib/katana_code/test/files/otp29.erl",
+            [no_fail, parse_macro_definitions]
+        ).
+
+-endif.
 -endif.
 -endif.
 
