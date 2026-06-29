@@ -4,13 +4,13 @@
 
 -export([valid/0]).
 
+%% erlfmt:ignore-begin
+
 %% native record declaration (no parentheses, hash before name)
 -record #point{x :: integer(), y :: integer()}.
 
 %% nominal type
 -nominal meters() :: number().
-
-%% erlfmt:ignore-begin
 
 valid() ->
     %% comprehension assignment (compr_assign experimental feature)
