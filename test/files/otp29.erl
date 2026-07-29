@@ -9,13 +9,10 @@
 %% native record declaration (no parentheses, hash before name)
 -record #point{x :: integer(), y :: integer()}.
 
-%% nominal type
--nominal meters() :: number().
-
 valid() ->
     %% comprehension assignment (compr_assign experimental feature)
     Pairs = [{1, a}, {2, b}, {3, c}],
-    [N || {N, _} = _Pair <- Pairs],
+    [N || Pair <- Pairs, N = element(1, Pair)],
 
     %% native record construction
     _P = #point{x = 1, y = 2},
