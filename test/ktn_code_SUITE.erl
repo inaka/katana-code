@@ -22,6 +22,11 @@
 
 -export([parse_generators/1, parse_macro_in_nominal/1]).
 
+-if(?OTP_RELEASE >= 29).
+
+-export([otp29_features/1]).
+
+-endif.
 -endif.
 -endif.
 
@@ -332,6 +337,20 @@ parse_macro_in_nominal(_Config) ->
         type_def_node(<<"-nominal nested() :: {?A, [?B], #{?C => ?D}}.">>),
     ok.
 
+-if(?OTP_RELEASE >= 29).
+
+otp29_features(_Config) ->
+    %% Native record declaration maps to type `native_record' with a `{Name, Fields}' value.
+    #{type := native_record, attrs := #{value := {point, _}}} =
+        native_record_node(<<"-record #point{x :: integer(), y :: integer()}.">>),
+    %% The full fixture file (native records + compr_assign comprehension) must parse cleanly.
+    {ok, _} =
+        ktn_dodger:parse_file(
+            "../../lib/katana_code/test/files/otp29.erl",
+            [no_fail, parse_macro_definitions]
+        ).
+
+-endif.
 -endif.
 -endif.
 
@@ -373,6 +392,15 @@ type_def_node(Source) ->
     [Node] =
         [N || N <- Content, lists:member(ktn_code:type(N), [type_attr, type, opaque, nominal])],
     Node.
+
+-if(?OTP_RELEASE >= 29).
+
+native_record_node(Source) ->
+    #{content := Content} = ktn_code:parse_tree(Source),
+    [Node] = [N || N <- Content, ktn_code:type(N) =:= native_record],
+    Node.
+
+-endif.
 
 -spec shuffle([string()]) -> [[any()]].
 shuffle(List) ->
