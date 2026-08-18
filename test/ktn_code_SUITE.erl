@@ -14,19 +14,16 @@
 
 -export([parse_maybe/1, parse_maybe_else/1]).
 
--if(?OTP_RELEASE >= 27).
-
--export([parse_sigils/1]).
+-export([otp27_features/1]).
 
 -if(?OTP_RELEASE >= 28).
 
--export([parse_generators/1, parse_macro_in_nominal/1]).
+-export([otp28_features/1, parse_macro_in_nominal/1]).
 
 -if(?OTP_RELEASE >= 29).
 
 -export([otp29_features/1]).
 
--endif.
 -endif.
 -endif.
 
@@ -308,9 +305,10 @@ parse_maybe_else(_Config) ->
 
     ok.
 
--if(?OTP_RELEASE >= 27).
-
-parse_sigils(_Config) ->
+otp27_features(_Config) ->
+    #{} = ktn_code:parse_tree(~|two_sigils() -> [~B'a sigil', ~"another sigil"].|),
+    {ok, Bin} = file:read_file("../../lib/katana_code/test/files/otp27.erl"),
+    #{} = ktn_code:parse_tree(Bin),
     {ok, _} =
         ktn_dodger:parse_file(
             "../../lib/katana_code/test/files/otp27.erl",
@@ -319,7 +317,10 @@ parse_sigils(_Config) ->
 
 -if(?OTP_RELEASE >= 28).
 
-parse_generators(_Config) ->
+otp28_features(_Config) ->
+    {ok, Bin} = file:read_file("../../lib/katana_code/test/files/otp28.erl"),
+    ct:log("OTP28:\n~p", [ktn_code:parse_tree(Bin)]),
+    #{} = ktn_code:parse_tree(Bin),
     {ok, _} =
         ktn_dodger:parse_file(
             "../../lib/katana_code/test/files/otp28.erl",
@@ -343,14 +344,17 @@ otp29_features(_Config) ->
     %% Native record declaration maps to type `native_record' with a `{Name, Fields}' value.
     #{type := native_record, attrs := #{value := {point, _}}} =
         native_record_node(<<"-record #point{x :: integer(), y :: integer()}.">>),
+
     %% The full fixture file (native records + compr_assign comprehension) must parse cleanly.
+    {ok, Bin} = file:read_file("../../lib/katana_code/test/files/otp29.erl"),
+    ct:log("OTP29:\n~p", [ktn_code:parse_tree(Bin)]),
+    #{} = ktn_code:parse_tree(Bin),
     {ok, _} =
         ktn_dodger:parse_file(
             "../../lib/katana_code/test/files/otp29.erl",
             [no_fail, parse_macro_definitions]
         ).
 
--endif.
 -endif.
 -endif.
 
