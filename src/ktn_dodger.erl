@@ -340,6 +340,10 @@ quick_parse_form(Dev, L0, Options) ->
          pre_fixer = fun no_fix/1 :: pre_fixer(),
          post_fixer = fun no_fix/1 :: post_fixer()}).
 
+-doc #{todo => """
+Once we move past OTP28 support,
+replace `erl_features:keyword_fun/2` by `erl_features:init_parse_state/2`
+"""}.
 parse_form(Dev, L0, Parser, Options) ->
     NoFail = proplists:get_bool(no_fail, Options),
     Opt = #opt{clever = proplists:get_bool(clever, Options),
@@ -348,8 +352,8 @@ parse_form(Dev, L0, Parser, Options) ->
                pre_fixer = proplists:get_value(pre_fixer, Options, fun no_fix/1),
                post_fixer = proplists:get_value(post_fixer, Options, fun no_fix/1)},
 
-    %% This has the *potential* to read options for enabling/disabling
-    %% (i.e. `{feature, TheFeature, enable}') when parsing the file.
+    %% Note that options `{feature, FeatureName, enable|disable}` may
+    %% enable or disable features that affect the parsing of the file.
     {ok, {_Ftrs, ResWordFun}} = erl_features:keyword_fun(Options, fun reserved_word/1),
 
     ScanOpts = [{reserved_word_fun, ResWordFun} | proplists:get_value(scan_opts, Options, [])],
@@ -374,7 +378,7 @@ parse_form(Dev, L0, Parser, Options) ->
         {error, _IoErr, _L1} = Err ->
             Err;
         {error, _Reason} ->
-            {eof, L0}; % This is probably encoding problem
+            {eof, L0}; % This is probably an encoding problem
         {eof, _L1} = Eof ->
             Eof
     end.
@@ -579,7 +583,7 @@ quick_macro_string(A) ->
 
 %% Skipping to the end of a macro call, tracking open/close constructs.
 
--spec skip_macro_args(Tokens :: term()) -> {Skipped :: list(), Rest :: term()}.
+-spec skip_macro_args(Tokens :: [term()]) -> {Skipped :: [term()], Rest :: [term()]}.
 
 skip_macro_args([{'(', _} = T | Ts]) ->
     skip_macro_args(Ts, [')'], [T]);
