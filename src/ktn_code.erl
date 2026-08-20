@@ -833,6 +833,18 @@ to_map({attribute, Attrs, record, {Name, Fields}}) ->
             },
         content => to_map(Fields)
     };
+%% Native Record Attribute
+to_map({attribute, Attrs, native_record, {Name, Fields}}) ->
+    #{
+        type => native_record,
+        attrs =>
+            #{
+                location => get_location(Attrs),
+                text => get_text(Attrs),
+                name => Name
+            },
+        content => to_map(Fields)
+    };
 to_map({typed_record_field, Field, Type}) ->
     FieldMap = to_map(Field),
     #{

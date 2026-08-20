@@ -342,7 +342,7 @@ parse_macro_in_nominal(_Config) ->
 
 otp29_features(_Config) ->
     %% Native record declaration maps to type `native_record' with a `{Name, Fields}' value.
-    #{type := native_record, attrs := #{value := {point, _}}} =
+    #{type := native_record, attrs := #{name := point}} =
         native_record_node(<<"-record #point{x :: integer(), y :: integer()}.">>),
 
     %% The full fixture file (native records + compr_assign comprehension) must parse cleanly.
