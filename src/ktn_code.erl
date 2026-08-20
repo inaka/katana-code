@@ -662,9 +662,9 @@ to_map({zip, Attrs, Generators}) ->
         attrs =>
             #{
                 location => get_location(Attrs),
-                text => get_text(Attrs),
-                generators => [to_map(Generator) || Generator <- Generators]
-            }
+                text => get_text(Attrs)
+            },
+        node_attrs => #{generators => lists:map(fun to_map/1, Generators)}
     };
 to_map({generate_strict, Attrs, Pattern, Expr}) ->
     #{
