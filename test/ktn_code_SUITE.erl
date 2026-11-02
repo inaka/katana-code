@@ -391,7 +391,7 @@ macro_type_children(_Config) ->
                 Bodies
             )
         end,
-        [<<"type">>, <<"opaque">>]
+        [<<"type">>, <<"opaque">>, <<"nominal">>]
     ),
     Quoted = type_def_node(<<"-type t() :: ?WRAP(atom()) | 'good'.">>),
     [#{attrs := #{text := "'good'", location := {1, 30}}}] =

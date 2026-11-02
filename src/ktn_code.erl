@@ -177,7 +177,7 @@ decode_type_term(
 ) ->
     {macro, decode_type_term(Attrs), erl_syntax:macro_name(Macro), none};
 decode_type_term({tuple, _, Items}) ->
-    list_to_tuple([decode_type_term(Item) || Item <- Items]);
+    list_to_tuple(lists:map(fun decode_type_term/1, Items));
 decode_type_term({cons, _, Head, Tail}) ->
     [decode_type_term(Head) | decode_type_term(Tail)];
 decode_type_term({nil, _}) ->
