@@ -359,6 +359,12 @@ otp29_features(_Config) ->
 -endif.
 -endif.
 
+-if(?OTP_RELEASE >= 28).
+-define(TYPE_KINDS, [<<"type">>, <<"opaque">>, <<"nominal">>]).
+-else.
+-define(TYPE_KINDS, [<<"type">>, <<"opaque">>]).
+-endif.
+
 -spec macro_type_children(config()) -> ok.
 macro_type_children(_Config) ->
     Bodies = [
@@ -391,7 +397,7 @@ macro_type_children(_Config) ->
                 Bodies
             )
         end,
-        [<<"type">>, <<"opaque">>, <<"nominal">>]
+        ?TYPE_KINDS
     ),
     Quoted = type_def_node(<<"-type t() :: ?WRAP(atom()) | 'good'.">>),
     [#{attrs := #{text := "'good'", location := {1, 30}}}] =
