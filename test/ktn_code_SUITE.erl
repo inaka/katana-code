@@ -9,6 +9,7 @@
     parse_tree_otp/1,
     latin1_parse_tree/1,
     parse_macro_in_type/1,
+    macro_type_children/1,
     to_string/1
 ]).
 
@@ -358,6 +359,60 @@ otp29_features(_Config) ->
 -endif.
 -endif.
 
+-if(?OTP_RELEASE >= 28).
+-define(TYPE_KINDS, [<<"type">>, <<"opaque">>, <<"nominal">>]).
+-else.
+-define(TYPE_KINDS, [<<"type">>, <<"opaque">>]).
+-endif.
+
+-spec macro_type_children(config()) -> ok.
+macro_type_children(_Config) ->
+    Bodies = [
+        <<"?WRAP(atom()) | bad_atom | 'good'">>,
+        <<"{?MODULE, [bad_atom], #{key => 'good'}}">>,
+        <<"?WRAP(remote:type()) | bad_atom | 'good'">>
+    ],
+    lists:foreach(
+        fun(Kind) ->
+            lists:foreach(
+                fun(Body) ->
+                    Source = <<"-", Kind/binary, " t(A) :: ", Body/binary, ".">>,
+                    Node = type_def_node(Source),
+                    Children = tree_nodes(Node),
+                    Atoms = [N || #{type := atom} = N <- Children],
+                    true = lists:any(
+                        fun(#{attrs := Attrs}) -> maps:get(value, Attrs) =:= bad_atom end, Atoms
+                    ),
+                    lists:foreach(
+                        fun(#{attrs := Attrs}) ->
+                            {Line, Col} = maps:get(location, Attrs),
+                            true = Line > 0 andalso Col > 0,
+                            Text = maps:get(text, Attrs),
+                            true = is_list(Text) andalso Text =/= []
+                        end,
+                        Atoms
+                    ),
+                    #{node_attrs := #{args := [#{type := var, attrs := #{name := 'A'}}]}} = Node
+                end,
+                Bodies
+            )
+        end,
+        ?TYPE_KINDS
+    ),
+    Quoted = type_def_node(<<"-type t() :: ?WRAP(atom()) | 'good'.">>),
+    [#{attrs := #{text := "'good'", location := {1, 30}}}] =
+        [N || #{type := atom, attrs := #{value := good}} = N <- tree_nodes(Quoted)],
+    ok.
+
+tree_nodes(Node) ->
+    [
+        Node
+        | lists:flatmap(
+            fun tree_nodes/1,
+            maps:get(content, Node, []) ++
+                lists:flatten(maps:values(maps:get(node_attrs, Node, #{})))
+        )
+    ].
 -spec parse_macro_in_type(config()) -> ok.
 parse_macro_in_type(_Config) ->
     %% A macro in a type body must still classify the attribute correctly (so

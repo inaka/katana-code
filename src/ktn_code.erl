@@ -163,16 +163,33 @@ revert(_, Node) ->
 attribute_value(Kind, [{tuple, _, [{atom, _, Name}, Type, Params]}]) when
     Kind =:= type; Kind =:= opaque; Kind =:= nominal
 ->
-    {Name, Type, cons_to_list(Params)};
+    {Name, decode_type_term(Type), decode_type_term(Params)};
 attribute_value(_Kind, Args) ->
     Args.
 
-cons_to_list({nil, _}) ->
+%% Decode dodger's quoted abstract terms, without evaluating source code.
+decode_type_term(
+    {tuple, _, [
+        {atom, _, atom},
+        Attrs,
+        {tree, macro, _, _} = Macro
+    ]}
+) ->
+    {macro, decode_type_term(Attrs), erl_syntax:macro_name(Macro), none};
+decode_type_term({tuple, _, Items}) ->
+    list_to_tuple(lists:map(fun decode_type_term/1, Items));
+decode_type_term({cons, _, Head, Tail}) ->
+    [decode_type_term(Head) | decode_type_term(Tail)];
+decode_type_term({nil, _}) ->
     [];
-cons_to_list({cons, _, Head, Tail}) ->
-    [Head | cons_to_list(Tail)];
-cons_to_list(Other) ->
-    [Other].
+decode_type_term({atom, _, Value}) ->
+    Value;
+decode_type_term({integer, _, Value}) ->
+    Value;
+decode_type_term({string, _, Value}) ->
+    Value;
+decode_type_term(Other) ->
+    Other.
 
 token_to_map({Type, Attrs}) ->
     #{type => Type, attrs => #{text => get_text(Attrs), location => get_location(Attrs)}};
@@ -968,6 +985,19 @@ to_map({paren_type, Attrs, [Type]}) ->
 to_map(any) ->
     #{type => any};
 %% Other Attributes
+to_map({attribute, Attrs, Kind, {Name, Type, Args} = Value}) when
+    Kind =:= opaque; Kind =:= nominal
+->
+    #{
+        type => Kind,
+        attrs => #{
+            location => get_location(Attrs),
+            text => get_text(Attrs),
+            value => Value,
+            name => Name
+        },
+        node_attrs => #{args => to_map(Args), type => to_map(Type)}
+    };
 to_map({attribute, Attrs, type, {Name, Type, Args}}) ->
     #{
         type => type_attr,
