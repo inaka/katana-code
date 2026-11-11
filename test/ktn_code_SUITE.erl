@@ -2,6 +2,7 @@
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
+    parse_else_directive/1,
     quoted_macro_names/1,
     map_nodes/1,
     map_invalid_callback/1,
@@ -78,6 +79,45 @@ enabled_features() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Test Cases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-spec parse_else_directive(config()) -> ok.
+parse_else_directive(Config) ->
+    Path = filename:join(proplists:get_value(priv_dir, Config), "else_directive.erl"),
+    Source =
+        "-module(x).\n"
+        "-export([x/0]).\n"
+        "-ifdef(VAR).\n"
+        "x() -> var.\n"
+        "-else.\n"
+        "x() -> not_var.\n"
+        "-endif.\n",
+    ok = file:write_file(Path, Source),
+    try
+        {ok, DefaultForms} = ktn_dodger:parse_file(Path),
+        assert_else_directive(DefaultForms),
+        lists:foreach(
+            fun(Options) ->
+                {ok, Forms} = ktn_dodger:parse_file(Path, Options),
+                assert_else_directive(Forms)
+            end,
+            [[], [no_fail], [{scan_opts, [text]}], [no_fail, {scan_opts, [text]}]]
+        )
+    after
+        ok = file:delete(Path)
+    end,
+    ok.
+
+assert_else_directive(Forms) ->
+    [attribute, attribute, attribute, function, attribute, function, attribute] =
+        [erl_syntax:type(Form) || Form <- Forms],
+    [module, export, ifdef, 'else', endif] =
+        [
+            erl_syntax:atom_value(erl_syntax:attribute_name(Form))
+         || Form <- Forms, erl_syntax:type(Form) =:= attribute
+        ],
+    Else = lists:nth(5, Forms),
+    none = erl_syntax:attribute_arguments(Else),
+    ok.
 
 -spec quoted_macro_names(config()) -> ok.
 quoted_macro_names(_Config) ->
