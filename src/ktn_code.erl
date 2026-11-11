@@ -6,7 +6,7 @@
 -elvis([{elvis_style, dont_repeat_yourself, #{min_complexity => 25}}]).
 -elvis([{elvis_style, no_throw, disable}]).
 
--export([beam_to_string/1, beam_to_erl/2, parse_tree/1, eval/1, consult/1, to_str/1]).
+-export([beam_to_string/1, beam_to_erl/2, parse_tree/1, eval/1, consult/1, to_str/1, map/2]).
 %% Getters
 -export([type/1, attr/2, node_attr/2, content/1]).
 
@@ -228,6 +228,26 @@ consult(Source) ->
             Value
         end,
     lists:map(ExprsFun, Parsed).
+
+%% @doc Applies Fun to each node, visiting children before their parent.
+%% Accepts a single node or a (possibly nested) list of nodes and preserves
+%% the input shape. Traverses content and all node_attrs values; ordinary
+%% attrs are left unchanged unless Fun changes them. Children introduced
+%% by Fun are not traversed again.
+-spec map(fun((tree_node()) -> tree_node()), tree_node() | [tree_node()]) ->
+    tree_node() | [tree_node()].
+map(Fun, Nodes) when is_function(Fun, 1), is_list(Nodes) ->
+    lists:map(fun(Node) -> map(Fun, Node) end, Nodes);
+map(Fun, Node) when is_function(Fun, 1), is_map(Node) ->
+    WithChildren = maps:map(
+        fun
+            (content, Children) -> map(Fun, Children);
+            (node_attrs, Attrs) -> maps:map(fun(_Key, Value) -> map(Fun, Value) end, Attrs);
+            (_Key, Value) -> Value
+        end,
+        Node
+    ),
+    Fun(WithChildren).
 
 %% Getters
 

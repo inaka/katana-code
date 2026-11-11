@@ -2,6 +2,10 @@
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
+    map_nodes/1,
+    map_invalid_callback/1,
+    map_order/1,
+    map_remove_location/1,
     guards/1,
     consult/1,
     beam_to_string/1,
@@ -73,6 +77,86 @@ enabled_features() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Test Cases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+-spec map_nodes(config()) -> ok.
+map_nodes(_Config) ->
+    Leaf = #{type => atom, attrs => #{value => hello}},
+    Node = #{
+        type => clause,
+        attrs => #{metadata => Leaf},
+        content => [Leaf, #{type => tuple, content => [Leaf]}],
+        node_attrs => #{pattern => [Leaf], guards => [[Leaf], []], expression => Leaf}
+    },
+    Mark = fun(N) -> N#{visited => true} end,
+    MarkedLeaf = Mark(Leaf),
+    Expected = Node#{
+        visited => true,
+        content => [MarkedLeaf, #{type => tuple, visited => true, content => [MarkedLeaf]}],
+        node_attrs => #{
+            pattern => [MarkedLeaf], guards => [[MarkedLeaf], []], expression => MarkedLeaf
+        }
+    },
+    Expected = ktn_code:map(Mark, Node),
+    ExpectedList = [Expected, MarkedLeaf],
+    ExpectedList = ktn_code:map(Mark, [Node, Leaf]),
+    [] = ktn_code:map(Mark, []),
+    Node = ktn_code:map(fun(N) -> N end, Node),
+    ok.
+
+-spec map_invalid_callback(config()) -> ok.
+map_invalid_callback(_Config) ->
+    InvalidCallbacks = [not_a_function, fun() -> ok end, fun(A, _B) -> A end],
+    Inputs = [#{type => atom}, [#{type => atom}], []],
+    lists:foreach(
+        fun(Callback) ->
+            lists:foreach(
+                fun(Input) ->
+                    try ktn_code:map(Callback, Input) of
+                        Result -> ct:fail({unexpected_success, Callback, Input, Result})
+                    catch
+                        error:function_clause -> ok
+                    end
+                end,
+                Inputs
+            )
+        end,
+        InvalidCallbacks
+    ),
+    ok.
+
+-spec map_order(config()) -> ok.
+map_order(_Config) ->
+    %% The callback sees transformed children and runs exactly once per node.
+    Count = fun(N) ->
+        Children = ktn_code:content(N),
+        false = maps:is_key(count, N),
+        N#{count => 1 + lists:sum([maps:get(count, C) || C <- Children])}
+    end,
+    #{count := 3, content := [#{count := 2, content := [#{count := 1}]}]} =
+        ktn_code:map(Count, #{
+            type => root, content => [#{type => tuple, content => [#{type => atom}]}]
+        }),
+    %% New children returned by the callback are not revisited.
+    #{content := [#{type := atom}]} =
+        ktn_code:map(fun(N) -> N#{content => [#{type => atom}]} end, #{type => root}),
+    ok.
+
+-spec map_remove_location(config()) -> ok.
+map_remove_location(_Config) ->
+    #{content := [#{content := [#{content := [Match]}]}]} =
+        ktn_code:parse_tree("f() -> {g(a), X} =\n    {g(a), X}."),
+    [Left, Right] = ktn_code:content(Match),
+    false = Left =:= Right,
+    RemoveLocation = fun
+        (#{attrs := Attrs} = N) -> N#{attrs := maps:remove(location, Attrs)};
+        (N) -> N
+    end,
+    [Same, Same] = ktn_code:map(RemoveLocation, [Left, Right]),
+    lists:foreach(
+        fun(N) -> false = maps:is_key(location, maps:get(attrs, N, #{})) end,
+        tree_nodes(Same)
+    ),
+    ok.
 
 -spec guards(config()) -> ok.
 guards(_Config) ->
