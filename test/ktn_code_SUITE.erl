@@ -3,6 +3,7 @@
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
     parse_else_directive/1,
+    quoted_macro_names/1,
     map_nodes/1,
     map_invalid_callback/1,
     map_order/1,
@@ -117,6 +118,46 @@ assert_else_directive(Forms) ->
     Else = lists:nth(5, Forms),
     none = erl_syntax:attribute_arguments(Else),
     ok.
+
+-spec quoted_macro_names(config()) -> ok.
+quoted_macro_names(_Config) ->
+    Sources = [
+        {"-define(CCR_INITIAL, ?'CC-REQUEST-TYPE_INITIAL_REQUEST').",
+            'CC-REQUEST-TYPE_INITIAL_REQUEST'},
+        {"-define(CCR_UPDATE, ?'CC-REQUEST-TYPE_UPDATE_REQUEST').",
+            'CC-REQUEST-TYPE_UPDATE_REQUEST'},
+        {"-define(CCR_UPDATE, ?'WORK').", 'WORK'}
+    ],
+    lists:foreach(
+        fun({Source, MacroName}) ->
+            {ok, Tokens, _} = erl_scan:string(Source),
+            %% Without scanner text, reconstruction must still quote atoms safely.
+            Reconstructed = lists:flatten(ktn_dodger:tokens_to_string(Tokens)),
+            {ok, ReconstructedTokens, _} = erl_scan:string(Reconstructed),
+            Symbols = [erl_scan:symbol(Token) || Token <- Tokens],
+            Symbols = [erl_scan:symbol(Token) || Token <- ReconstructedTokens],
+            lists:foreach(
+                fun(Options) ->
+                    Body = quoted_macro_body(Source, Options),
+                    {ok, BodyTokens, _} = erl_scan:string(Body),
+                    [{'?', _}, {atom, _, MacroName}] = BodyTokens
+                end,
+                [[], [{scan_opts, [text]}]]
+            )
+        end,
+        Sources
+    ),
+    ok.
+
+quoted_macro_body(Source, Options) ->
+    Device = ktn_io_string:new(Source),
+    try
+        {ok, [Form]} = ktn_dodger:parse(Device, 1, Options),
+        [_Name, Body] = erl_syntax:attribute_arguments(Form),
+        erl_syntax:text_string(Body)
+    after
+        ok = file:close(Device)
+    end.
 
 -spec map_nodes(config()) -> ok.
 map_nodes(_Config) ->
