@@ -12,6 +12,10 @@
 
 -export_type([tree_node/0, tree_node_type/0, beam_lib_beam/0]).
 
+-ifdef(TEST).
+-export([to_map/1, decode_type_term/1]).
+-endif.
+
 %% NOTE: we use atom() below, because erl_scan:category() is not exported.
 -type tree_node_type() :: atom().
 -type tree_node() ::
