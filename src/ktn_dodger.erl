@@ -93,6 +93,9 @@
          quick_parse/1, parse/2, quick_parse/2, parse/3, quick_parse/3, parse_form/2, parse_form/3,
          quick_parse_form/2, quick_parse_form/3, format_error/1, tokens_to_string/1]).
 
+%% IO protocol callback used to retain source consumed by the scanner.
+-export([scan_tokens/3]).
+
 %% The following should be: 1) pseudo-uniquely identifiable, and 2)
 %% cause nice looking error messages when the parser has to give up.
 
@@ -357,7 +360,9 @@ parse_form(Dev, L0, Parser, Options) ->
     {ok, {_Ftrs, ResWordFun}} = erl_features:keyword_fun(Options, fun reserved_word/1),
 
     ScanOpts = [{reserved_word_fun, ResWordFun} | proplists:get_value(scan_opts, Options, [])],
-    case io:scan_erl_form(Dev, "", L0, ScanOpts) of
+    case scan_source_form(Dev, L0, ScanOpts, NoFail) of
+        {source, Form, End} ->
+            {ok, Form, End};
         {ok, Ts, L1} ->
             case extract_escript_header(Ts) of
                 no_header ->
@@ -382,6 +387,47 @@ parse_form(Dev, L0, Parser, Options) ->
         {eof, _L1} = Eof ->
             Eof
     end.
+
+scan_source_form(Dev, Location, Options, false) ->
+    io:scan_erl_form(Dev, "", Location, Options);
+scan_source_form(Dev, Location, Options, true) ->
+    case io:request(Dev, {get_until, unicode, "", ?MODULE, scan_tokens, [{Location, Options}]}) of
+        {{error, {_, erl_scan, Reason}, End}, Source} when
+            element(1, Reason) =:= unterminated, element(2, Reason) =:= string;
+            element(1, Reason) =:= string, element(2, Reason) =:= $"
+        ->
+            Text = string:trim(Source, leading),
+            Prefix = lists:sublist(Source, length(Source) - length(Text)),
+            {ok, [], Start} = erl_scan:string(Prefix, Location),
+            {source, erl_syntax:set_pos(erl_syntax:text(Text), Start), End};
+        {Result, Source} when is_tuple(Result), is_list(Source) ->
+            Result;
+        Error ->
+            Error
+    end.
+
+%% Retain consumed characters across IO chunks without seeking the device.
+%% This also supports streams and ktn_io_string devices.
+-spec scan_tokens(term(), string() | eof, {erl_anno:location(), list()}) ->
+    {more, term()} | {done, term(), string() | eof}.
+scan_tokens([], Chars, Options) ->
+    scan_tokens({[], []}, Chars, Options);
+scan_tokens({Continuation, Chunks}, Chars, {Location, Options}) ->
+    case erl_scan:tokens(Continuation, Chars, Location, Options) of
+        {more, Next} ->
+            {more, {Next, [Chars | Chunks]}};
+        {done, Result, Rest} ->
+            Consumed = consumed_chars(Chars, Rest),
+            Source = lists:append(lists:reverse([Consumed | Chunks])),
+            {done, {Result, Source}, Rest}
+    end.
+
+consumed_chars(eof, _Rest) ->
+    [];
+consumed_chars(Chars, Rest) when is_list(Rest) ->
+    lists:sublist(Chars, length(Chars) - length(Rest));
+consumed_chars(Chars, eof) ->
+    Chars.
 
 extract_escript_header([{'#', Anno}, {'!', _} | _] = Ts) ->
     LineNo = erl_anno:line(Anno),
