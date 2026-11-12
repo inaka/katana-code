@@ -30,6 +30,16 @@ form_repair(_Config) ->
         NoFix
     ),
     no_fix = ktn_dodger:fix_form([]),
+    {retry, _, _} = ktn_dodger:fix_form([
+        {atom, 1, '?preprocessor declaration?'},
+        {'(', 1},
+        {')', 1},
+        {'->', 1},
+        {atom, 1, define},
+        {'(', 1},
+        {')', 1},
+        {dot, 1}
+    ]),
     no_fix = ktn_dodger:fix_form([
         {atom, 1, '?preprocessor declaration?'},
         {'(', 1},
@@ -98,6 +108,8 @@ scanner_boundaries(_Config) ->
 
 -spec stringify_macros(config()) -> ok.
 stringify_macros(_Config) ->
+    PlainTokens = [{var, 1, 'NAME'}],
+    {retry, PlainTokens, _} = ktn_dodger:fix_stringyfied_macros(PlainTokens),
     %% Stringification may encounter both internally rewritten variable names
     %% and ordinary atom tokens; it must preserve their distinct meanings.
     {retry, [{atom, 1, '?,?NAME'}], _} =

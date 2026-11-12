@@ -22,6 +22,7 @@ expression_forms(_Config) ->
         "f() -> try run() catch error:R -> R after cleanup() end.",
         "f() -> try run() of R -> R catch error:E -> E after cleanup() end.",
         "f() -> catch run().",
+        "f() -> begin first(), second() end.",
         "f() -> receive M -> M end.",
         "f() -> receive M -> M after 0 -> timeout end.",
         "f(X) -> fun local/1, fun mod:remote/2, fun(X) -> X end, fun Loop(A) -> Loop(A) end.",
@@ -29,6 +30,7 @@ expression_forms(_Config) ->
         "f(X) -> [A || A <- X, A > 0].",
         "f(X) -> << <<A>> || <<A>> <= X >>.",
         "f(X) -> #{A => A || A <- X}.",
+        "f(X) -> #{K => V || K := V <- X}.",
         "f() -> ?constant, ?VARIABLE, ?CALL(a, b).",
         "f(X) -> X(a), mod:f(X)."
     ],
@@ -38,12 +40,16 @@ expression_forms(_Config) ->
         end,
         Sources
     ),
+    #{content := [#{type := 'if'}, #{type := else_attr}, _]} =
+        ktn_code:parse_tree("-if(true).\n-else.\n-endif."),
+    #{content := [#{type := if_attr}]} = ktn_code:parse_tree("-if(?CONDITION)."),
     ok.
 
 -spec type_forms(config()) -> ok.
 type_forms(_Config) ->
     Sources = [
         "-record(r, {key = ok :: atom()}).",
+        "-record(r, {key}).",
         "-type t() :: atom() | integer().",
         "-type t(A) :: {A, [atom()], #{atom() => integer()}}.",
         "-type t() :: fun((atom()) -> integer()).",

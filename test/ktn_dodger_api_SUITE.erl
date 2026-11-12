@@ -81,6 +81,9 @@ quick_files(Config) ->
 
 -spec directives(config()) -> ok.
 directives(_Config) ->
+    {ok, [Include, IncludeLib]} = parse("-include(\"a.hrl\").\n-include_lib(\"b.hrl\").", []),
+    include = erl_syntax:atom_value(erl_syntax:attribute_name(Include)),
+    include_lib = erl_syntax:atom_value(erl_syntax:attribute_name(IncludeLib)),
     {ok, [Error, Warning]} = parse("-error(\"bad\").\n-warning(\"careful\").", []),
     {_, ktn_dodger, {error, ErrorText}} = erl_syntax:error_marker_info(Error),
     {_, ktn_dodger, {warning, WarningText}} = erl_syntax:error_marker_info(Warning),
@@ -104,6 +107,7 @@ compact_strings(_Config) ->
             attribute = erl_syntax:type(Definition)
         end,
         [
+            [parse_macro_definitions],
             [compact_strings],
             [compact_strings, {scan_opts, [text]}],
             [compact_strings, parse_macro_definitions],
@@ -148,6 +152,8 @@ diagnostics(_Config) ->
     "error text" = ktn_dodger:format_error({error, "error text"}),
     "warning text" = ktn_dodger:format_error({warning, "warning text"}),
     [_ | _] = lists:flatten(ktn_dodger:format_error({unknown, custom})),
+    {ok, [SyntaxError]} = parse("f() -> ->.", []),
+    error_marker = erl_syntax:type(SyntaxError),
     {ok, [Recovered]} = parse("f() -> ->.", [no_fail]),
     text = erl_syntax:type(Recovered),
     ok.

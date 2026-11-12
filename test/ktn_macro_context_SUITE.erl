@@ -14,7 +14,7 @@ all() ->
 -spec nested_arguments(config()) -> ok.
 nested_arguments(_Config) ->
     {ok, [Function]} = parse(
-        "f() -> ?MACRO(<<1>>, begin ok end, if true -> ok end, "
+        "f() -> ?MACRO([1,2], <<1>>, begin ok end, if true -> ok end, "
         "case x of x -> ok end, receive X -> X after 0 -> ok end, "
         "try ok after ok end).",
         []
@@ -22,7 +22,7 @@ nested_arguments(_Config) ->
     [Clause] = erl_syntax:function_clauses(Function),
     [Macro] = erl_syntax:clause_body(Clause),
     macro = erl_syntax:type(Macro),
-    6 = length(erl_syntax:macro_arguments(Macro)),
+    7 = length(erl_syntax:macro_arguments(Macro)),
     ok.
 
 -spec remote_calls(config()) -> ok.
@@ -66,6 +66,11 @@ legacy_macro(_Config) ->
 
 -spec scanner_tokens(config()) -> ok.
 scanner_tokens(_Config) ->
+    %% Exercise reconstruction even when the runtime scanner emits no sigil tokens.
+    lists:foreach(
+        fun(Token) -> "" = ktn_dodger:tokens_to_string([Token]) end,
+        [{sigil_prefix, 1, b}, {sigil_suffix, 1, []}]
+    ),
     "\"joined\"" = lists:flatten(ktn_dodger:tokens_to_string([{string_concat, 1, "joined"}])),
     "fn(" = lists:flatten(ktn_dodger:tokens_to_string([{var, 1, fn}, {'(', 1}])),
     ".\nnext" = ktn_dodger:tokens_to_string([{dot, 1}, {atom, 2, next}]),

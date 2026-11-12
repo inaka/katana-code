@@ -1,6 +1,7 @@
 -module(ktn_abstract_SUITE).
 
 -export([all/0, annotations/1, legacy_forms/1, diagnostics/1, invalid_forms/1]).
+-export([strict_generators/1]).
 
 -behaviour(ct_suite).
 
@@ -9,7 +10,7 @@
 
 -spec all() -> [atom()].
 all() ->
-    [annotations, legacy_forms, diagnostics, invalid_forms].
+    [annotations, legacy_forms, strict_generators, diagnostics, invalid_forms].
 
 -spec annotations(config()) -> ok.
 annotations(_Config) ->
@@ -54,6 +55,12 @@ legacy_forms(_Config) ->
     #{type := type, attrs := #{name := '...'}} = ktn_code:to_map({type, 1, any}),
     #{type := record_field, node_attrs := #{type := #{type := atom}}} =
         ktn_code:to_map({paren_type, 1, [{atom, 1, wrapped}]}),
+    #{type := type, content := [#{type := any}]} =
+        ktn_code:to_map({type, 1, tuple, any}),
+    #{type := user_type, attrs := #{name := custom}} =
+        ktn_code:to_map({user_type, 1, custom, []}),
+    #{type := record_field, node_attrs := #{var := #{type := var}}} =
+        ktn_code:to_map({ann_type, 1, [{var, 1, 'A'}, {type, 1, atom, []}]}),
     VariableAttribute = erl_syntax:attribute(erl_syntax:variable('NAME'), []),
     #{} = ktn_code:to_map(VariableAttribute),
     UnknownType = erl_syntax:variable('OPAQUE_ENCODING'),
@@ -62,6 +69,32 @@ legacy_forms(_Config) ->
         ktn_code:to_map(erl_syntax:text("unparsed source")),
     #{type := macro, attrs := #{name := "NAME"}, content := []} =
         ktn_code:to_map({macro, 1, erl_syntax:variable('NAME'), none}),
+    ok.
+
+-spec strict_generators(config()) -> ok.
+strict_generators(_Config) ->
+    %% OTP 27 cannot scan this syntax, but the converter still supports its AST.
+    Annotation = [{location, {3, 5}}, {text, "generator"}],
+    Kinds = [generate_strict, b_generate_strict, m_generate_strict],
+    Generators = [{Kind, Annotation, {var, 3, 'Value'}, {var, 3, 'Input'}} || Kind <- Kinds],
+    #{
+        type := zip,
+        attrs := #{location := {3, 5}, text := "generator"},
+        node_attrs := #{generators := Mapped}
+    } = ktn_code:to_map({zip, Annotation, Generators}),
+    Kinds = [ktn_code:type(Node) || Node <- Mapped],
+    lists:foreach(
+        fun(Node) ->
+            #{
+                attrs := #{location := {3, 5}, text := "generator"},
+                node_attrs := #{
+                    pattern := #{type := var, attrs := #{name := 'Value'}},
+                    expression := #{type := var, attrs := #{name := 'Input'}}
+                }
+            } = Node
+        end,
+        Mapped
+    ),
     ok.
 
 -spec diagnostics(config()) -> ok.
