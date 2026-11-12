@@ -96,6 +96,14 @@
 %% IO protocol callback used to retain source consumed by the scanner.
 -export([scan_tokens/3]).
 
+-ifdef(TEST).
+-export([
+    parse_tokens/4, parse_tokens_as_terms/3, fix_form/1,
+    fix_stringyfied_macros/1, consumed_chars/2, start_pos/2,
+    reserved_word/1, quickscan_form/1
+]).
+-endif.
+
 %% The following should be: 1) pseudo-uniquely identifiable, and 2)
 %% cause nice looking error messages when the parser has to give up.
 
