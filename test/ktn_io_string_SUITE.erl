@@ -1,6 +1,6 @@
 -module(ktn_io_string_SUITE).
 
--export([all/0, characters/1, lines/1, positions/1, skip/1, idle_timeout/1]).
+-export([all/0, characters/1, lines/1, positions/1, skip/1]).
 
 -behaviour(ct_suite).
 
@@ -9,7 +9,7 @@
 
 -spec all() -> [atom()].
 all() ->
-    [characters, lines, positions, skip, idle_timeout].
+    [characters, lines, positions, skip].
 
 -spec characters(config()) -> ok.
 characters(_Config) ->
@@ -63,19 +63,3 @@ skip(_Config) ->
     {done, eof, []} = ktn_io_string:skip({cont, 1, []}, 1),
     {done, 0, "abc"} = ktn_io_string:skip({cont, 0, "abc"}, 0),
     ok.
-
--spec idle_timeout(config()) -> ok.
-idle_timeout(_Config) ->
-    State = #{buffer => "abc", original => "abc", idle_timeout => 50},
-    {Device, Ref} = spawn_monitor(ktn_io_string, loop, [State]),
-    %% Each recursive receive must retain this device's short timeout.
-    "a" = io:get_chars(Device, "", 1),
-    {ok, 0} = file:position(Device, 0),
-    Device ! ignored_message,
-    "a" = io:get_chars(Device, "", 1),
-    receive
-        {'DOWN', Ref, process, Device, timeout} -> ok
-    after 5000 ->
-        exit(Device, kill),
-        ct:fail(idle_device_did_not_exit)
-    end.

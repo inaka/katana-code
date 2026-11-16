@@ -14,7 +14,8 @@
     encodings/1,
     token_roundtrip/1,
     parsing_wrappers/1,
-    escript_header/1
+    escript_header/1,
+    closed_device/1
 ]).
 
 -behaviour(ct_suite).
@@ -34,7 +35,8 @@ all() ->
         encodings,
         token_roundtrip,
         parsing_wrappers,
-        escript_header
+        escript_header,
+        closed_device
     ].
 
 -spec quick_macros(config()) -> ok.
@@ -206,6 +208,13 @@ escript_header(_Config) ->
     function = erl_syntax:type(Function),
     {ok, [Error]} = parse("#!/usr/bin/env escript\nmain() -> ?UNFINISHED(.\n", []),
     {_, ktn_dodger, macro_args} = erl_syntax:error_marker_info(Error),
+    ok.
+
+-spec closed_device(config()) -> ok.
+closed_device(_Config) ->
+    Device = ktn_io_string:new(""),
+    ok = file:close(Device),
+    {eof, 1} = ktn_dodger:parse_form(Device, 1, [no_fail]),
     ok.
 
 parse(Source, Options) ->

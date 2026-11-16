@@ -3,9 +3,7 @@
 -export([new/1]).
 -export([start_link/1, init/1, loop/1, skip/2, skip/3]).
 
--define(DEFAULT_IDLE_TIMEOUT, 60000).
-
--type state() :: #{buffer := string(), original := string(), idle_timeout => timeout()}.
+-type state() :: #{buffer := string(), original := string()}.
 
 -export_type([state/0]).
 
@@ -34,27 +32,25 @@ start_link(Str) ->
 
 -spec init(string()) -> ok.
 init(Str) ->
-    State = #{buffer => Str, original => Str, idle_timeout => ?DEFAULT_IDLE_TIMEOUT},
+    State = #{buffer => Str, original => Str},
     ?MODULE:loop(State).
 
 -spec loop(state()) -> ok.
 loop(#{buffer := Str} = State) ->
-    Timeout = maps:get(idle_timeout, State, ?DEFAULT_IDLE_TIMEOUT),
     receive
         {io_request, From, ReplyAs, Request} ->
             {Reply, NewStr} = request(Request, Str),
             _ = reply(From, ReplyAs, Reply),
             ?MODULE:loop(State#{buffer := NewStr});
         {file_request, From, Ref, close} ->
-            _ = file_reply(From, Ref, ok),
-            ok;
+            file_reply(From, Ref, ok);
         {file_request, From, Ref, {position, Pos}} ->
             {Reply, NewState} = file_position(Pos, State),
             _ = file_reply(From, Ref, Reply),
             ?MODULE:loop(NewState);
         _Unknown ->
             ?MODULE:loop(State)
-    after Timeout ->
+    after 60000 ->
         exit(timeout)
     end.
 
